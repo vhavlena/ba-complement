@@ -1,1 +1,1 @@
-# ba-complement
+# Complementation of Buchi Automata
