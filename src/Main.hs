@@ -2,6 +2,7 @@
 import ComplKV
 import BuchiAutomaton
 import RabitAutomataParser
+import BuchiAutomataOper
 
 
 main = do
@@ -9,4 +10,6 @@ main = do
 
 complBAKV filename = do
   aut <- parseFile filename
-  putStrLn $ show $ complKV aut ["a", "b", "c"]
+  let com = complKV aut ["a", "b", "c"]
+  putStrLn $ show $ com
+  putStrLn $ show $ trimBA $ com
