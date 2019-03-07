@@ -87,7 +87,7 @@ parseRabitBuchiAutomaton :: Parser RabitBuchiAutomaton
 parseRabitBuchiAutomaton = do
   ini <- sepEndBy (parseState) newline
   trans <- many (try parseTransition)
-  fin <- sepBy (parseState) newline
+  fin <- many (try parseState)
   let iniSet = Set.fromList ini
       finSet = Set.fromList fin
       stSet = Set.union (getAllStates trans) (Set.union iniSet finSet)

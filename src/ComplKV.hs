@@ -16,6 +16,12 @@ oddRanks :: (Ord a) => RankFunc a -> Set.Set a
 oddRanks = Set.fromList . Map.keys . Map.filter (odd)
 
 
+allRanks :: (Ord a) => [a] -> Set.Set (RankFunc a)
+allRanks states = generateFromConstr con where
+  n = length states
+  con = [(q, 2*n) | q <- states]
+
+
 generateFromConstr :: (Ord a) => [(a, Int)] -> Set.Set (RankFunc a)
 generateFromConstr = Set.fromList . map (Map.fromList) . sequence . map (smaller)
   where
@@ -34,7 +40,9 @@ isFinKV (_, b, _) = Set.null b
 
 
 iniKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (StateKV a)
-iniKV (BuchiAutomaton st ini fin tr) = Set.empty
+iniKV (BuchiAutomaton st ini _ _) =
+    Set.fromList [(ini, Set.empty, f) | f <- Set.toList $ allRanks (Set.toList st)]
+
 
 succKV :: (Ord a, Ord b) => BuchiAutomaton a b -> StateKV a -> b
   -> Set.Set (StateKV a)

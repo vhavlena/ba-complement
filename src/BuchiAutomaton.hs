@@ -25,7 +25,7 @@ data BuchiAutomaton a b = BuchiAutomaton {
 }
 
 instance (Show a, Show b) => Show (BuchiAutomaton a b) where
-  show = printBA
+  show b = show $ length $ states b -- printBA
 
 printBA :: (Show a, Show b) => BuchiAutomaton a b -> String
 printBA (BuchiAutomaton st ini fin trans) = "States: " ++ Aux.printSetCom st ++
