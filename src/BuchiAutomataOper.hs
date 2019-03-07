@@ -29,11 +29,17 @@ convBAtoGraph mp (BuchiAutomaton st _ _ tr) = buildG bounds $ rename $ trToEdges
   rename = map (\(x,y) -> (mp Bimp.!> x, mp Bimp.!> y))
 
 
+isTrivialSCC :: Graph -> Tree Vertex -> Bool
+isTrivialSCC gr tree = ((length fl) == 1) && (elem (it, it) (edges gr)) where
+  fl = flatten tree
+  it = head fl
+
+
 finalSCC :: (Ord a) => BuchiAutomaton a b -> [Set.Set a]
 finalSCC b@(BuchiAutomaton _ _ fin _) = filter (\x -> not $ Set.disjoint x fin) stscc where
   stmap = createStateMap b
   graph = convBAtoGraph stmap b
-  sccs = scc graph
+  sccs = filter (not . isTrivialSCC graph) $ scc graph
   stscc = map (Set.fromList . map (stmap Bimp.!) . flatten) sccs
 
 
