@@ -1,15 +1,28 @@
 
 module ComplKV (
   complKV
+  , printStateKV
+  , printRabitStateKV
 ) where
 
 
 import BuchiAutomaton
+import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 type RankFunc a = Map.Map a Int
 type StateKV a = (Set.Set a, Set.Set a, RankFunc a)
+
+
+printRabitStateKV :: StateKV String -> String
+printRabitStateKV (s, o, f) = "({" ++ (Aux.printSetComF (id) s) ++ "},{"
+  ++ (Aux.printSetComF (id) o) ++ "},{" ++ (Aux.printMapF (id) f) ++ "})"
+
+
+printStateKV :: (Show a) => StateKV a -> String
+printStateKV (s, o, f) = "({" ++ (Aux.printSetCom s) ++ "},{"
+  ++ (Aux.printSetCom o) ++ "},{" ++ (Aux.printMap f) ++ "})"
 
 
 oddRanks :: (Ord a) => RankFunc a -> Set.Set a
