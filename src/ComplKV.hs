@@ -61,8 +61,10 @@ succKV :: (Ord a, Ord b) => BuchiAutomaton a b -> StateKV a -> b
   -> Set.Set (StateKV a)
 succKV (BuchiAutomaton _ _ _ tr) (sset, oset, f) sym = Set.fromList succs where
   funcs = Set.toList $ generateRanking f sset sym tr
-  succs = [(succSet sset sym tr, Set.difference (succSet oset sym tr)
-    (oddRanks f'), f') | f' <- funcs]
+  succs = [(succSet sset sym tr,
+    if not $ Set.null oset then Set.difference (succSet oset sym tr) (oddRanks f')
+    else Set.difference (succSet sset sym tr) (oddRanks f'),
+    f') | f' <- funcs]
 
 
 complKV :: (Ord a, Ord b) => BuchiAutomaton a b -> [b] -> BuchiAutomaton (StateKV a) b

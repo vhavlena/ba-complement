@@ -2,11 +2,11 @@
 module BuchiAutomaton (
   BuchiAutomaton(..)
   , Transitions
+  , Transition
   , succTrans
   , succSet
   , unionBA
   , constrFromOrig
-  , printDot
 ) where
 
 import qualified Data.List as List
@@ -24,35 +24,6 @@ data BuchiAutomaton a b = BuchiAutomaton {
    , finals :: Set.Set a
    , transitions :: Transitions a b
 }
-
-instance (Show a, Show b) => Show (BuchiAutomaton a b) where
-  show = printBA -- show $ length $ states b
-
-printBA :: (Show a, Show b) => BuchiAutomaton a b -> String
-printBA (BuchiAutomaton st ini fin trans) = "States: " ++ Aux.printSetCom st ++
-  "\nInitials: " ++ Aux.printSetCom ini ++ "\nFinals: " ++ Aux.printSetCom fin ++
-  "\nTransitions:\n" ++ (List.intercalate "\n" $ map (printTransition) $ Map.toList trans)
-
-
-printTransition :: (Show a, Show b) => Transition a b -> String
-printTransition ((from, sym), to) = "(" ++ (show from) ++ ", " ++ (show sym) ++
-  ") -> {" ++ (Aux.printSetCom to) ++ "}"
-
-
-printDot :: (Show a, Show b) => (a -> String) -> (b -> String) -> BuchiAutomaton a b -> String
-printDot f g (BuchiAutomaton st ini fin trans) =
-  "digraph finite_state_machine {\nrankdir=LR;\nsize=\"8,5\"" ++
-  "node [shape = doublecircle]; " ++ Aux.printSetComF f fin ++ "\n" ++
-  "node [shape = circle];\n" ++
-  (List.intercalate "" $ map (printDotTransition f g) $ Map.toList trans) ++
-  "}"
-
-
-printDotTransition :: (Show a, Show b) => (a -> String) -> (b -> String) -> Transition a b -> String
-printDotTransition f g ((from, sym), to) =
-  unlines $ map (printEdge from sym) $ Set.toList to where
-    printEdge from sym to = "\"" ++ (f from) ++ "\" -> \"" ++ (f to) ++
-      "\" [ label = \"" ++ (g sym) ++ "\" ];"
 
 
 succTrans :: (Ord a, Ord b) => a -> b -> Transitions a b -> [a]
