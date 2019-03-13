@@ -3,6 +3,9 @@ module BuchiAutomataOper (
   transposeBA
   , restrictBA
   , trimBA
+  , renameBA
+  , unionBA
+  , disjointUnionBA
 ) where
 
 
@@ -15,9 +18,16 @@ import BuchiAutomaton
 
 type StateMap a = Bimp.Bimap Int a
 
+--------------------------------------------------------------------------------------------------------------
+-- Part with the trim, transpose, and restriction function
+--------------------------------------------------------------------------------------------------------------
 
 createStateMap :: (Ord a) => BuchiAutomaton a b -> StateMap a
 createStateMap (BuchiAutomaton st _ _ _) = Bimp.fromList $ zip [0..(length st)-1] (Set.toList st)
+
+
+createStateMapFrom :: (Ord a) => Int -> BuchiAutomaton a b -> StateMap a
+createStateMapFrom x (BuchiAutomaton st _ _ _) = Bimp.fromList $ zip [x..(length st)-1+x] (Set.toList st)
 
 
 convBAtoGraph :: (Ord a) => StateMap a -> BuchiAutomaton a b -> Graph
@@ -75,3 +85,29 @@ trimBA b@(BuchiAutomaton st ini fin tr) = restrictBA b rst where
   backReach = reachableStates (transposeBA b) finSCC
   finSCC = foldr (Set.union) Set.empty $ finalSCC b
   rst = Set.intersection forwReach backReach
+
+
+--------------------------------------------------------------------------------------------------------------
+-- Part with the rename, union function
+--------------------------------------------------------------------------------------------------------------
+
+renameBA :: (Ord a, Ord b) => Int -> BuchiAutomaton a b -> BuchiAutomaton Int b
+renameBA x ba@(BuchiAutomaton st ini fin tr) = BuchiAutomaton (g st) (g ini) (g fin) tr' where
+  stm = createStateMapFrom x ba
+  rn x = stm Bimp.!> x
+  g = Set.map (rn)
+  tr' = Map.fromList $ map (\((x,y),z) -> ((rn x, y), g z)) $ Map.toList tr
+
+
+unionBA :: (Ord a, Ord b) => BuchiAutomaton a b -> BuchiAutomaton a b -> BuchiAutomaton a b
+unionBA (BuchiAutomaton st1 ini1 fin1 tr1) (BuchiAutomaton st2 ini2 fin2 tr2) =
+  BuchiAutomaton (Set.union st1 st2) (Set.union ini1 ini2) (Set.union fin1 fin2)
+  (Map.unionWith (Set.union) tr1 tr2)
+
+
+disjointUnionBA :: (Ord a, Ord b) => BuchiAutomaton a b -> BuchiAutomaton a b -> BuchiAutomaton Int b
+disjointUnionBA b1@(BuchiAutomaton st1 _ _ _) b2@(BuchiAutomaton st2 _ _ _) =
+  unionBA rb1 rb2 where
+    n = Set.size st1
+    rb1 = renameBA 0 b1
+    rb2 = renameBA n b2

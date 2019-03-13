@@ -12,6 +12,6 @@ main = do
 complBAKV filename = do
   aut <- parseFile filename
   let com = aut --complKV aut ["a", "b", "c"]
-  --putStrLn $ show com
+  --putStrLn $ show $ renameBA 0 com
   putStrLn $ printBADot (printRabitStateKV) (id) $ complKV (com) ["a", "b", "c"]
   putStrLn $ printBADot (printRabitStateKV) (id) $ complKV (trimBA com) ["a", "b", "c"]

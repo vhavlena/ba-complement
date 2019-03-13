@@ -7,6 +7,7 @@ module ComplKV (
 
 
 import BuchiAutomaton
+import BuchiAutomatonConstr
 import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
