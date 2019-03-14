@@ -2,10 +2,13 @@
 module BuchiAutomataExp (
   printBA
   , printBADot
+  , printStateProd
+  , printRabitStateProd
 ) where
 
 
 import BuchiAutomaton
+import BuchiAutomataOper
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -46,3 +49,13 @@ printDotTransition f g ((from, sym), to) =
   unlines $ map (printEdge from sym) $ Set.toList to where
     printEdge from sym to = "\"" ++ (f from) ++ "\" -> \"" ++ (f to) ++
       "\" [ label = \"" ++ (g sym) ++ "\" ];"
+
+
+printStateProd :: (Show a, Show b) => StateProd a b -> String
+printStateProd (q1,q2,True) = "(" ++ show q1 ++ "," ++ show q2 ++ ",1)"
+printStateProd (q1,q2,False) = "(" ++ show q1 ++ "," ++ show q2 ++ ",0)"
+
+
+printRabitStateProd :: StateProd String String -> String
+printRabitStateProd (q1,q2,True) = "(" ++ q1 ++ "," ++ q2 ++ ",1)"
+printRabitStateProd (q1,q2,False) = "(" ++ q1 ++ "," ++ q2 ++ ",0)"

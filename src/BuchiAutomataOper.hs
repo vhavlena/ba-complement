@@ -7,6 +7,9 @@ module BuchiAutomataOper (
   , renameBA
   , unionBA
   , disjointUnionBA
+  , StateProd
+  , intersectionBA
+  , isEmptyBA
 ) where
 
 
@@ -145,8 +148,8 @@ disjointUnionBA b1@(BuchiAutomaton st1 _ _ _) b2@(BuchiAutomaton st2 _ _ _) =
     rb2 = renameBA n b2
 
 
-emptyBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Bool
-emptyBA = Set.null . initials . trimBA
+isEmptyBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Bool
+isEmptyBA = Set.null . initials . trimBA
 
 
 --------------------------------------------------------------------------------------------------------------
