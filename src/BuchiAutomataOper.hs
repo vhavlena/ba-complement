@@ -18,17 +18,18 @@ import Data.Tree
 import BuchiAutomaton
 
 type StateMap a = Bimp.Bimap Int a
+type StateProd a b = (a, b, Bool)
 
 --------------------------------------------------------------------------------------------------------------
 -- Part with the fixpoint contruction
 --------------------------------------------------------------------------------------------------------------
 
-constrFromOrigProc :: (Ord b, Ord c) => [c]
-  -> BuchiAutomaton c b
+constrFromOrigProc :: (Ord a, Ord b) => [a]
+  -> BuchiAutomaton a b
   -> [b]
-  -> (c -> b -> Set.Set c)
-  -> (c -> Bool)
-  -> BuchiAutomaton c b
+  -> (a -> b -> Set.Set a)
+  -> (a -> Bool)
+  -> BuchiAutomaton a b
 constrFromOrigProc [] ba _ _ _ = ba
 constrFromOrigProc (x:xs) b1@(BuchiAutomaton st1 _ _ _) alp suc isFin =
   constrFromOrigProc x' (unionBA b1 b2) alp suc isFin where
@@ -40,11 +41,11 @@ constrFromOrigProc (x:xs) b1@(BuchiAutomaton st1 _ _ _) alp suc isFin =
     x' = xs ++ (Set.toList $ Set.difference st' st1)
 
 
-constrFromOrig :: (Ord b, Ord c) => [b]
-  -> (c -> b -> Set.Set c)
-  -> (Set.Set c)
-  -> (c -> Bool)
-  -> BuchiAutomaton c b
+constrFromOrig :: (Ord a, Ord b) => [b]
+  -> (a -> b -> Set.Set a)
+  -> (Set.Set a)
+  -> (a -> Bool)
+  -> BuchiAutomaton a b
 constrFromOrig alp suc ini isFin = constrFromOrigProc (Set.toList ini)
   (BuchiAutomaton ini ini (Set.filter (isFin) ini) Map.empty) alp suc isFin
 
@@ -119,7 +120,7 @@ trimBA b@(BuchiAutomaton st ini fin tr) = restrictBA b rst where
 
 
 --------------------------------------------------------------------------------------------------------------
--- Part with the rename, union function
+-- Part with the rename, union, and emptiness checking function
 --------------------------------------------------------------------------------------------------------------
 
 renameBA :: (Ord a, Ord b) => Int -> BuchiAutomaton a b -> BuchiAutomaton Int b
@@ -144,7 +145,13 @@ disjointUnionBA b1@(BuchiAutomaton st1 _ _ _) b2@(BuchiAutomaton st2 _ _ _) =
     rb2 = renameBA n b2
 
 
-type StateProd a b = (a, b, Bool)
+emptyBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Bool
+emptyBA = Set.null . initials . trimBA
+
+
+--------------------------------------------------------------------------------------------------------------
+-- Part with the intersection function
+--------------------------------------------------------------------------------------------------------------
 
 succProd :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b -> BuchiAutomaton c b -> StateProd a c -> b
   -> Set.Set (StateProd a c)
