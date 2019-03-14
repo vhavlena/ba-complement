@@ -1,6 +1,7 @@
 
 module BuchiAutomataOper (
   transposeBA
+  , constrFromOrig
   , restrictBA
   , trimBA
   , renameBA
@@ -17,6 +18,36 @@ import Data.Tree
 import BuchiAutomaton
 
 type StateMap a = Bimp.Bimap Int a
+
+--------------------------------------------------------------------------------------------------------------
+-- Part with the fixpoint contruction
+--------------------------------------------------------------------------------------------------------------
+
+constrFromOrigProc :: (Ord b, Ord c) => [c]
+  -> BuchiAutomaton c b
+  -> [b]
+  -> (c -> b -> Set.Set c)
+  -> (c -> Bool)
+  -> BuchiAutomaton c b
+constrFromOrigProc [] ba _ _ _ = ba
+constrFromOrigProc (x:xs) b1@(BuchiAutomaton st1 _ _ _) alp suc isFin =
+  constrFromOrigProc x' (unionBA b1 b2) alp suc isFin where
+    tr' = Map.fromList [((x,sym), suc x sym) | sym <- alp]
+    st' = foldr (Set.union) Set.empty $ Map.elems tr'
+    ini' = Set.empty
+    fin' = Set.filter (isFin) st'
+    b2 = BuchiAutomaton st' ini' fin' tr'
+    x' = xs ++ (Set.toList $ Set.difference st' st1)
+
+
+constrFromOrig :: (Ord b, Ord c) => [b]
+  -> (c -> b -> Set.Set c)
+  -> (Set.Set c)
+  -> (c -> Bool)
+  -> BuchiAutomaton c b
+constrFromOrig alp suc ini isFin = constrFromOrigProc (Set.toList ini)
+  (BuchiAutomaton ini ini (Set.filter (isFin) ini) Map.empty) alp suc isFin
+
 
 --------------------------------------------------------------------------------------------------------------
 -- Part with the trim, transpose, and restriction function
@@ -111,3 +142,34 @@ disjointUnionBA b1@(BuchiAutomaton st1 _ _ _) b2@(BuchiAutomaton st2 _ _ _) =
     n = Set.size st1
     rb1 = renameBA 0 b1
     rb2 = renameBA n b2
+
+
+type StateProd a b = (a, b, Bool)
+
+succProd :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b -> BuchiAutomaton c b -> StateProd a c -> b
+  -> Set.Set (StateProd a c)
+succProd (BuchiAutomaton _ _ fin1 tr1) (BuchiAutomaton _ _ fin2 tr2) (q1, q2, n) sym
+  | n == True = retSet i
+  | otherwise = retSet i' where
+    fsucc = succTrans q1 sym tr1
+    ssucc = succTrans q2 sym tr2
+    retSet i = Set.map (\(x,y) -> (x,y,i)) $ Set.cartesianProduct fsucc ssucc
+    i = if Set.member q1 fin1 then False else True
+    i' = if Set.member q2 fin2 then True else False
+
+
+isFinProd :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b -> BuchiAutomaton c b -> StateProd a c -> Bool
+isFinProd _ (BuchiAutomaton _ _ fin _) (_, q2, False) = Set.member q2 fin
+isFinProd _ _ _ = False
+
+
+iniProd :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b
+  -> BuchiAutomaton c b
+  -> Set.Set (StateProd a c)
+iniProd (BuchiAutomaton _ ini1 _ _) (BuchiAutomaton _ ini2 _ _) =
+    Set.map (\(x,y) -> (x,y,True)) $ Set.cartesianProduct ini1 ini2
+
+
+intersectionBA :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b -> BuchiAutomaton c b -> BuchiAutomaton (StateProd a c) b
+intersectionBA ba1 ba2 = constrFromOrig alp (succProd ba1 ba2) (iniProd ba1 ba2) (isFinProd ba1 ba2) where
+  alp = Set.toList $ Set.union (alph ba1) (alph ba2)

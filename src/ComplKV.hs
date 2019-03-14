@@ -7,7 +7,7 @@ module ComplKV (
 
 
 import BuchiAutomaton
-import BuchiAutomatonConstr
+import BuchiAutomataOper
 import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -46,7 +46,7 @@ generateRanking :: (Ord a, Ord b) => RankFunc a -> Set.Set a -> b
   -> Transitions a b -> Set.Set (RankFunc a)
 generateRanking f act sym  tr = generateFromConstr rest where
   rest = Map.toList $ Map.fromListWith (min)
-    [(q', f Map.! q) | q <- Set.toList act, q' <- succTrans q sym tr]
+    [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
 isFinKV :: StateKV a -> Bool
@@ -69,4 +69,4 @@ succKV (BuchiAutomaton _ _ _ tr) (sset, oset, f) sym = Set.fromList succs where
 
 
 complKV :: (Ord a, Ord b) => BuchiAutomaton a b -> [b] -> BuchiAutomaton (StateKV a) b
-complKV orig alp = constrFromOrig orig alp (succKV) (iniKV orig) (isFinKV)
+complKV orig alp = constrFromOrig alp (succKV orig) (iniKV orig) (isFinKV)

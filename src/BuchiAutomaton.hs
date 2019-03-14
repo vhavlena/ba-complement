@@ -4,7 +4,9 @@ module BuchiAutomaton (
   , Transitions
   , Transition
   , succTrans
+  , succTransList
   , succSet
+  , alph
 ) where
 
 import qualified Data.List as List
@@ -24,8 +26,16 @@ data BuchiAutomaton a b = BuchiAutomaton {
 }
 
 
-succTrans :: (Ord a, Ord b) => a -> b -> Transitions a b -> [a]
-succTrans q sym = Set.toList . Map.findWithDefault Set.empty (q,sym)
+alph :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set b
+alph (BuchiAutomaton _ _ _ tr) = Set.fromList $ map (\((_,x),_) -> x) $ Map.toList tr
+
+
+succTransList :: (Ord a, Ord b) => a -> b -> Transitions a b -> [a]
+succTransList q sym = Set.toList . succTrans q sym
+
+
+succTrans :: (Ord a, Ord b) => a -> b -> Transitions a b -> Set.Set a
+succTrans q sym = Map.findWithDefault Set.empty (q,sym)
 
 
 succSet :: (Ord a, Ord b) => Set.Set a -> b -> Transitions a b -> Set.Set a
