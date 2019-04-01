@@ -43,22 +43,28 @@ main = do
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
           compl = trimBA $ complKV aut $ Set.toList (alph aut)
-          ren = renameBA 0 compl
+          renOrig = renameBA 0 compl
+          renCompl = renameBA 0 compl
       --putStrLn $ printBARabit $ renameBA 0 compl
-      writeFile "temp.ba" $ printBA $ compl
-      res <- checkCorrectness aut ren autname "temp.ba"
+      writeFile "temp.ba" $ printBARabit $ renameBA 0 compl
+      res <- checkCorrectness renOrig renCompl autname
       putStrLn $ show res
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
 
 
 
-checkCorrectness :: (Ord a, Show a,  Show c,  Ord c) => BuchiAutomaton a String -> BuchiAutomaton c String -> FilePath -> FilePath -> IO Bool
-checkCorrectness aut1 aut2 fp1 fp2 = do
+checkCorrectness :: (Ord a, Show a) => BuchiAutomaton a String -> BuchiAutomaton a String -> FilePath -> IO Bool
+checkCorrectness aut1 aut2 fp1 = do
   let prod = isEmptyBA $ renameBA 0 $ intersectionBA aut1 aut2
-  putStrLn $ show $ renameBA 0 $ trimBA $ intersectionBA aut1 aut2
-  incl <- RR.rabitActionIncl fp1 fp2
-  return $ (not incl) && prod
+      union = disjointUnionBA aut1 aut2
+      alphabet = Set.union (alph aut1) (alph aut2)
+      univ = universalBA alphabet
+  writeFile "tempfa2d3e-ds1.ba" $ printBARabit $ union
+  writeFile "tempfa2d3e-ds2.ba" $ printBARabit $ univ
+  incl1 <- RR.rabitActionIncl "tempfa2d3e-ds1.ba" "tempfa2d3e-ds2.ba"
+  incl2 <- RR.rabitActionIncl "tempfa2d3e-ds2.ba" "tempfa2d3e-ds1.ba"
+  return $ (not incl1) && (not incl2) && prod
 
 
 --------------------------------------------------------------------------------------------------------------

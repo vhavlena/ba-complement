@@ -63,7 +63,7 @@ printRabitStateProd (q1,q2,False) = "(" ++ q1 ++ "," ++ q2 ++ ",0)"
 
 
 printBARabit :: (Show a) => BuchiAutomaton a String -> String
-printBARabit (BuchiAutomaton _ ini fin trans) = Aux.printSet "\n" ini ++
+printBARabit (BuchiAutomaton _ ini fin trans) = Aux.printSet "\n" ini ++ "\n" ++
   (List.intercalate "" $ map (printRabitTrans) $ Map.toList trans) ++
   Aux.printSet "\n" fin
 

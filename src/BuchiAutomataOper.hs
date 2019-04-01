@@ -10,6 +10,7 @@ module BuchiAutomataOper (
   , StateProd
   , intersectionBA
   , isEmptyBA
+  , universalBA
 ) where
 
 
@@ -150,6 +151,12 @@ disjointUnionBA b1@(BuchiAutomaton st1 _ _ _) b2@(BuchiAutomaton st2 _ _ _) =
 
 isEmptyBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Bool
 isEmptyBA = Set.null . initials . trimBA
+
+
+universalBA :: (Ord b) => Set.Set b -> BuchiAutomaton Int b
+universalBA alph = BuchiAutomaton st st st tr where
+  st = Set.fromList [0]
+  tr = Map.fromList [((0,sym),st) | sym <- Set.toList alph]
 
 
 --------------------------------------------------------------------------------------------------------------
