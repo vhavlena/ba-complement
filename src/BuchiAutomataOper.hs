@@ -75,7 +75,7 @@ convBAtoGraph mp (BuchiAutomaton st _ _ tr) = buildG bounds $ rename $ trToEdges
 
 
 isTrivialSCC :: Graph -> Tree Vertex -> Bool
-isTrivialSCC gr tree = ((length fl) == 1) && (elem (it, it) (edges gr)) where
+isTrivialSCC gr tree = ((length fl) <= 1) && (not $ elem (it, it) (edges gr)) where
   fl = flatten tree
   it = head fl
 

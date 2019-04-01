@@ -4,6 +4,7 @@ module BuchiAutomataExp (
   , printBADot
   , printStateProd
   , printRabitStateProd
+  , printBARabit
 ) where
 
 
@@ -59,3 +60,15 @@ printStateProd (q1,q2,False) = "(" ++ show q1 ++ "," ++ show q2 ++ ",0)"
 printRabitStateProd :: StateProd String String -> String
 printRabitStateProd (q1,q2,True) = "(" ++ q1 ++ "," ++ q2 ++ ",1)"
 printRabitStateProd (q1,q2,False) = "(" ++ q1 ++ "," ++ q2 ++ ",0)"
+
+
+printBARabit :: (Show a) => BuchiAutomaton a String -> String
+printBARabit (BuchiAutomaton _ ini fin trans) = Aux.printSet "\n" ini ++
+  (List.intercalate "" $ map (printRabitTrans) $ Map.toList trans) ++
+  Aux.printSet "\n" fin
+
+
+printRabitTrans :: (Show a) => Transition a String -> String
+printRabitTrans ((from, sym), to) =
+  unlines $ map (printEdge from sym) $ Set.toList to where
+    printEdge from sym to = sym ++ "," ++ (show from) ++ "->" ++ (show to)

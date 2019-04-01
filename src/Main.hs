@@ -42,10 +42,23 @@ main = do
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
-          compl = complKV aut $ Set.toList (alph aut)
-      putStrLn $ show $ renameBA 0 compl
+          compl = trimBA $ complKV aut $ Set.toList (alph aut)
+          ren = renameBA 0 compl
+      --putStrLn $ printBARabit $ renameBA 0 compl
+      writeFile "temp.ba" $ printBA $ compl
+      res <- checkCorrectness aut ren autname "temp.ba"
+      putStrLn $ show res
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
+
+
+
+checkCorrectness :: (Ord a, Show a,  Show c,  Ord c) => BuchiAutomaton a String -> BuchiAutomaton c String -> FilePath -> FilePath -> IO Bool
+checkCorrectness aut1 aut2 fp1 fp2 = do
+  let prod = isEmptyBA $ renameBA 0 $ intersectionBA aut1 aut2
+  putStrLn $ show $ renameBA 0 $ trimBA $ intersectionBA aut1 aut2
+  incl <- RR.rabitActionIncl fp1 fp2
+  return $ (not incl) && prod
 
 
 --------------------------------------------------------------------------------------------------------------
