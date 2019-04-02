@@ -7,6 +7,7 @@
 
 import Data.Time
 import System.Environment
+import System.Directory
 import Data.Set as Set
 
 import ComplKV
@@ -19,8 +20,12 @@ import qualified RabitAutomataParser as RA
 import qualified RabitRelationParser as RR
 
 
+tmpFileSkeleton = "tempfa2d3e-ds1.ba"
+defaultOutName = "out.ba"
+
+
 data ProgArgs =
-  Compl FilePath
+  Compl FilePath FilePath
   | Help
   | Error
 
@@ -28,7 +33,8 @@ data ProgArgs =
 parseArgs :: [String] -> ProgArgs
 parseArgs args
   | (length args) == 1 && (last args) == "--help" = Help
-  | (length args) == 1 = Compl (head args)
+  | (length args) == 1 = Compl (head args) defaultOutName
+  | (length args) == 3 && (args !! 1) == "-o" = Compl (head args) (last args)
   | otherwise = Error
 
 
@@ -36,35 +42,36 @@ main = do
   args <- getArgs
   start <- getCurrentTime
   case (parseArgs args) of
-    Compl autname -> do
+    Compl autname outname -> do
       aut <- RA.parseFile autname
       relExt <- RR.rabitActionRel autname
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
           compl = trimBA $ complKV aut $ Set.toList (alph aut)
-          renOrig = renameBA 0 compl
+          renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
-      --putStrLn $ printBARabit $ renameBA 0 compl
-      writeFile "temp.ba" $ printBARabit $ renameBA 0 compl
-      res <- checkCorrectness renOrig renCompl autname
-      putStrLn $ show res
+      writeFile outname $ printBARabit $ renCompl
+      res <- checkCorrectness renOrig renCompl
+      putStrLn $ "Check: " ++ (show res)
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
 
 
 
-checkCorrectness :: (Ord a, Show a) => BuchiAutomaton a String -> BuchiAutomaton a String -> FilePath -> IO Bool
-checkCorrectness aut1 aut2 fp1 = do
+checkCorrectness :: (Ord a, Show a) => BuchiAutomaton a String -> BuchiAutomaton a String -> IO Bool
+checkCorrectness aut1 aut2 = do
   let prod = isEmptyBA $ renameBA 0 $ intersectionBA aut1 aut2
-      union = disjointUnionBA aut1 aut2
+      union = removeMultipleInitials 0 $ disjointUnionBA aut1 aut2
       alphabet = Set.union (alph aut1) (alph aut2)
       univ = universalBA alphabet
-  writeFile "tempfa2d3e-ds1.ba" $ printBARabit $ union
-  writeFile "tempfa2d3e-ds2.ba" $ printBARabit $ univ
-  incl1 <- RR.rabitActionIncl "tempfa2d3e-ds1.ba" "tempfa2d3e-ds2.ba"
-  incl2 <- RR.rabitActionIncl "tempfa2d3e-ds2.ba" "tempfa2d3e-ds1.ba"
-  return $ (not incl1) && (not incl2) && prod
+  writeFile tmpFileSkeleton $ printBARabit $ union
+  writeFile (tmpFileSkeleton ++ "1") $ printBARabit $ univ
+  incl1 <- RR.rabitActionIncl tmpFileSkeleton (tmpFileSkeleton ++ "1")
+  incl2 <- RR.rabitActionIncl (tmpFileSkeleton ++ "1") tmpFileSkeleton
+  removeFile tmpFileSkeleton
+  removeFile (tmpFileSkeleton ++ "1")
+  return $ incl1 && incl2 && prod
 
 
 --------------------------------------------------------------------------------------------------------------

@@ -93,5 +93,4 @@ rabitActionIncl autname1 autname2 = do
   out <- readProcess "java" ["-jar", rabitPath ++ "RABIT.jar",
     autname1, autname2] []
   let rt = if (last $ lines out) == "Included." then True else False
-  putStrLn out
   return rt

@@ -11,6 +11,7 @@ module BuchiAutomataOper (
   , intersectionBA
   , isEmptyBA
   , universalBA
+  , removeMultipleInitials
 ) where
 
 
@@ -145,18 +146,31 @@ disjointUnionBA :: (Ord a, Ord b) => BuchiAutomaton a b -> BuchiAutomaton a b ->
 disjointUnionBA b1@(BuchiAutomaton st1 _ _ _) b2@(BuchiAutomaton st2 _ _ _) =
   unionBA rb1 rb2 where
     n = Set.size st1
-    rb1 = renameBA 0 b1
-    rb2 = renameBA n b2
+    rb1 = renameBA 1 b1
+    rb2 = renameBA (n+1) b2
 
 
 isEmptyBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Bool
 isEmptyBA = Set.null . initials . trimBA
 
 
+--------------------------------------------------------------------------------------------------------------
+-- Part with the universal BA, removing multiple initial states
+--------------------------------------------------------------------------------------------------------------
+
 universalBA :: (Ord b) => Set.Set b -> BuchiAutomaton Int b
 universalBA alph = BuchiAutomaton st st st tr where
   st = Set.fromList [0]
   tr = Map.fromList [((0,sym),st) | sym <- Set.toList alph]
+
+
+removeMultipleInitials :: (Ord a, Ord b) => a -> BuchiAutomaton a b -> BuchiAutomaton a b
+removeMultipleInitials start (BuchiAutomaton st ini fin tr) = (BuchiAutomaton nst nini fin ntr) where
+  lstini = Map.toList $ Map.filterWithKey (\(st,sym) _ -> Set.member st ini) tr
+  tr' = Map.fromListWith (Set.union) [((start,sym),to) | ((st,sym),to) <- lstini]
+  ntr = Map.union tr' tr
+  nini = Set.singleton start
+  nst = Set.union st nini
 
 
 --------------------------------------------------------------------------------------------------------------
