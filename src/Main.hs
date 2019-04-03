@@ -11,6 +11,7 @@ import System.Directory
 import Data.Set as Set
 
 import ComplKV
+import ComplSchewe
 import BuchiAutomaton
 import BuchiAutomataOper
 import BuchiAutomataExp
@@ -48,11 +49,12 @@ main = do
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
-          compl = trimBA $ complKV aut $ Set.toList (alph aut)
+          compl = trimBA $ complSchewe aut $ Set.toList (alph aut)
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
       writeFile outname $ printBARabit $ renCompl
       res <- checkCorrectness renOrig renCompl
+      putStrLn $ "States: " ++ (show $ Set.size $ states renCompl)
       putStrLn $ "Check: " ++ (show res)
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)

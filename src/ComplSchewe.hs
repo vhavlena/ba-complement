@@ -60,7 +60,7 @@ allRanks fin sset states = generateSRanksFromConstr fin sset con where
 
 
 isRankSTight :: (Ord a) => Set.Set a -> RankFunc a -> Bool
-isRankSTight st f = (odd mRank) && (Set.isSubsetOf odds ranks) where
+isRankSTight st f = (not $ Map.null f) && (odd mRank) && (Set.isSubsetOf odds ranks) where
   ranks = Set.fromList $ Map.elems f
   mRank = Set.findMax ranks
   odds = Set.fromList [x | x <- [1..mRank], odd x]
