@@ -18,6 +18,7 @@ module BuchiAutomataOper (
 import qualified Data.Map as Map
 import qualified Data.Bimap as Bimp
 import qualified Data.Set as Set
+import qualified Data.List as List
 import Data.Graph
 import Data.Tree
 import BuchiAutomaton

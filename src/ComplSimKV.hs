@@ -1,29 +1,25 @@
+{-|
+Module      : ComplSimKV.hs
+Description : Improved KV complementation using simulations
+Author      : Vojtech Havlena, April 2019
+License     : GPL-3
+-}
 
-module ComplKV (
-  complKV
-  , printStateKV
-  , printRabitStateKV
+module ComplSimKV (
+  complSimKV
 ) where
 
 
 import BuchiAutomaton
 import BuchiAutomataOper
+import RabitRelation
 import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 type RankFunc a = Map.Map a Int
 type StateKV a = (Set.Set a, Set.Set a, RankFunc a)
-
-
-printRabitStateKV :: StateKV String -> String
-printRabitStateKV (s, o, f) = "({" ++ (Aux.printSetComF (id) s) ++ "},{"
-  ++ (Aux.printSetComF (id) o) ++ "},{" ++ (Aux.printMapF (id) f) ++ "})"
-
-
-printStateKV :: (Show a) => StateKV a -> String
-printStateKV (s, o, f) = "({" ++ (Aux.printSetCom s) ++ "},{"
-  ++ (Aux.printSetCom o) ++ "},{" ++ (Aux.printMap f) ++ "})"
+type DelaySim a = Set.Set (a, a)
 
 
 oddRanks :: (Ord a) => RankFunc a -> Set.Set a
@@ -46,23 +42,33 @@ generateFromConstr fin = Set.fromList . map (Map.fromList) . sequence . map (sma
 
 generateRanking :: (Ord a, Ord b) => Set.Set a -> RankFunc a -> Set.Set a -> b
   -> Transitions a b -> Set.Set (RankFunc a)
-generateRanking fin f act sym  tr = generateFromConstr fin rest where
+generateRanking fin f act sym tr = generateFromConstr fin rest where
   rest = Map.toList $ Map.fromListWith (min)
     [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
-isFinKV :: StateKV a -> Bool
-isFinKV (_, b, _) = Set.null b
+isFinSimKV :: StateKV a -> Bool
+isFinSimKV (_, b, _) = Set.null b
 
 
-iniKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (StateKV a)
-iniKV (BuchiAutomaton st ini fin _) =
+iniSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (StateKV a)
+iniSimKV (BuchiAutomaton st ini fin _) =
     Set.fromList [(ini, Set.empty, f) | f <- Set.toList $ allRanks fin (Set.toList ini)]
 
 
-succKV :: (Ord a, Ord b) => BuchiAutomaton a b -> StateKV a -> b
+evenCeil :: Int -> Int
+evenCeil n = if odd n then n+1 else n
+
+
+isStateSimValid :: (Ord a) => DelaySim a -> StateKV a -> Bool
+isStateSimValid rel (sset, oset, f) = Set.foldr (&&) True $
+  Set.map (\(x,y) -> (f Map.! x) <= (evenCeil (f Map.! y))) $
+  Set.intersection rel (Set.cartesianProduct sset sset)
+
+
+succSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> StateKV a -> b
   -> Set.Set (StateKV a)
-succKV (BuchiAutomaton _ _ fin tr) (sset, oset, f) sym = Set.fromList succs where
+succSimKV (BuchiAutomaton _ _ fin tr) sim (sset, oset, f) sym = Set.fromList $ filter (isStateSimValid sim) succs where
   funcs = Set.toList $ generateRanking fin f sset sym tr
   succs = [(succSet sset sym tr,
     if not $ Set.null oset then Set.difference (succSet oset sym tr) (oddRanks f')
@@ -70,5 +76,5 @@ succKV (BuchiAutomaton _ _ fin tr) (sset, oset, f) sym = Set.fromList succs wher
     f') | f' <- funcs]
 
 
-complKV :: (Ord a, Ord b) => BuchiAutomaton a b -> [b] -> BuchiAutomaton (StateKV a) b
-complKV orig alp = constrFromOrig alp (succKV orig) (iniKV orig) (isFinKV)
+complSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> [b] -> BuchiAutomaton (StateKV a) b
+complSimKV orig rel alp = constrFromOrig alp (succSimKV orig rel) (iniSimKV orig) (isFinSimKV)
