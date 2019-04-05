@@ -30,14 +30,13 @@ oddRanks :: (Ord a) => RankFunc a -> Set.Set a
 oddRanks = Set.fromList . Map.keys . Map.filter (odd)
 
 
-allRanks :: (Ord a) => Set.Set a -> [a] -> Set.Set (RankFunc a)
-allRanks fin states = generateFromConstr fin con where
-  n = length states
-  con = [(q, 2*n) | q <- states]
+allRanks :: (Ord a) => Set.Set a -> Int -> [a] -> Set.Set (RankFunc a)
+allRanks fin n states = Set.singleton $ Map.fromList [(q, 2*n) | q <- states] --where
+  --con = [(q, 2*n) | q <- states]
 
 
 generateFromConstr :: (Ord a) => Set.Set a -> [(a, Int)] -> Set.Set (RankFunc a)
-generateFromConstr fin = Set.fromList . map (Map.fromList) . sequence . map (smaller)
+generateFromConstr fin = Set.fromList . map (Map.fromList) . map (filter (\(_,y) -> y > 0)) . sequence . map (smaller)
   where
     smaller (x,y)
       | Set.member x fin = [(x,y') | y' <- [0..y], even y']
@@ -48,7 +47,7 @@ generateRanking :: (Ord a, Ord b) => Set.Set a -> RankFunc a -> Set.Set a -> b
   -> Transitions a b -> Set.Set (RankFunc a)
 generateRanking fin f act sym  tr = generateFromConstr fin rest where
   rest = Map.toList $ Map.fromListWith (min)
-    [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
+    [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
 isFinKV :: StateKV a -> Bool
@@ -57,7 +56,7 @@ isFinKV (_, b, _) = Set.null b
 
 iniKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (StateKV a)
 iniKV (BuchiAutomaton st ini fin _) =
-    Set.fromList [(ini, Set.empty, f) | f <- Set.toList $ allRanks fin (Set.toList ini)]
+    Set.fromList [(ini, Set.empty, f) | f <- Set.toList $ allRanks fin (Set.size st) (Set.toList ini)]
 
 
 succKV :: (Ord a, Ord b) => BuchiAutomaton a b -> StateKV a -> b
