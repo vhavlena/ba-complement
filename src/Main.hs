@@ -50,10 +50,11 @@ main = do
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
-      let compl = trimBA $ complSimKV (aut) rel $ Set.toList (alph aut)
+      let compl = trimBA $ complKV (aut) $ Set.toList (alph aut)
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
-      writeFile outname $ printBARabit $ renCompl
+      putStrLn $ show rel
+      writeFile outname $ printBARabit $ compl
       putStrLn $ "States: " ++ (show $ Set.size $ states renCompl)
       res <- checkCorrectness renOrig renCompl
       putStrLn $ "Check: " ++ (show res)
