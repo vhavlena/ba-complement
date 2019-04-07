@@ -53,9 +53,8 @@ rankOf :: (Ord a) => RankFunc a -> Int
 rankOf = maximum . Map.elems
 
 
-allRanks :: (Ord a) => Set.Set a -> Set.Set a -> [a] -> Set.Set (RankFunc a)
-allRanks fin sset states = generateSRanksFromConstr fin sset con where
-  n = length states
+allRanks :: (Ord a) => Set.Set a -> Int -> Set.Set a -> [a] -> Set.Set (RankFunc a)
+allRanks fin n sset states = generateSRanksFromConstr fin sset con where
   con = [(q, 2*n) | q <- states]
 
 
@@ -71,7 +70,7 @@ rankImage i = Map.keysSet . Map.filterWithKey (\_ v -> v == i)
 
 
 generateSRanksFromConstr :: (Ord a) => Set.Set a -> Set.Set a -> [(a, Int)] -> Set.Set (RankFunc a)
-generateSRanksFromConstr fin sset = Set.filter (isRankSTight sset) . Set.fromList . map (Map.fromList) . sequence . map (smaller)
+generateSRanksFromConstr fin sset = Set.filter (isRankSTight sset) . Set.fromList . map (Map.fromList) . map (filter (\(_,y) -> y > 0)) . sequence . map (smaller)
   where
     smaller (x,y)
       | Set.member x fin = [(x,y') | y' <- [0..y], even y']
@@ -82,7 +81,7 @@ generateRanking :: (Ord a, Ord b) => Set.Set a -> RankFunc a -> Set.Set a -> b
   -> Transitions a b -> Set.Set (RankFunc a)
 generateRanking fin f act sym  tr = generateSRanksFromConstr fin act rest where
   rest = Map.toList $ Map.fromListWith (min)
-    [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
+    [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
 isFinSchewe :: StateSchewe a -> Bool
@@ -97,7 +96,7 @@ iniSchewe (BuchiAutomaton st ini fin _) = Set.singleton $ Prefix ini
 succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> StateSchewe a -> b
   -> Set.Set (StateSchewe a)
 succSchewe (BuchiAutomaton states _ fin tr) (Prefix sset) sym = Set.union succs1 succs2 where
-  funcs = Set.toList $ allRanks fin sset (Set.toList states)
+  funcs = Set.toList $ allRanks fin (Set.size states) sset (Set.toList states)
   succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
 succSchewe (BuchiAutomaton _ _ fin tr) (Suffix (sset, oset, f, i)) sym = Set.fromList succs where

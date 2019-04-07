@@ -50,7 +50,7 @@ main = do
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
-      let compl = trimBA $ complKV (aut) $ Set.toList (alph aut)
+      let compl = trimBA $ complSchewe (aut) $ Set.toList (alph aut)
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
       putStrLn $ show rel
