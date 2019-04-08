@@ -10,6 +10,7 @@ module ComplSimKV (
 ) where
 
 
+import Simulation
 import BuchiAutomaton
 import BuchiAutomataOper
 import RabitRelation
@@ -19,8 +20,6 @@ import qualified Data.Map as Map
 
 type RankFunc a = Map.Map a Int
 type StateKV a = (Set.Set a, Set.Set a, RankFunc a)
-type DelaySim a = Set.Set (a, a)
-
 
 oddRanks :: (Ord a) => RankFunc a -> Set.Set a
 oddRanks = Set.fromList . Map.keys . Map.filter (odd)
@@ -54,19 +53,10 @@ iniSimKV (BuchiAutomaton st ini fin _) sim =
   Set.fromList $ map (saturateSimState sim) [(ini, Set.empty, f) | f <- Set.toList $ allRanks fin (Set.size st) (Set.toList ini)]
 
 
-evenCeil :: Int -> Int
-evenCeil n = if odd n then n+1 else n
-
-
 isStateSimValid :: (Ord a) => DelaySim a -> StateKV a -> Bool
 isStateSimValid rel (sset, oset, f) = Set.foldr (&&) True $
   Set.map (\(x,y) -> (Map.findWithDefault 0 x f) <= (evenCeil (Map.findWithDefault 0 y f))) $
   Set.intersection rel (Set.cartesianProduct sset sset)
-
-
-simClosure :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a
-simClosure sim sset = Set.fromList $ lsim >>= \(x,y) -> if y `elem` sset then return x else [] where
-  lsim = Set.toList sim
 
 
 saturateRank :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a -> RankFunc a -> RankFunc a
@@ -76,14 +66,9 @@ saturateRank sim satset sset f = if Set.null sset then f else  Map.union f $ Map
   val s = evenCeil $ Set.findMin $ Set.map (\x -> Map.findWithDefault 0 x f) (gr s)
 
 
-repeatChange f v
-  | (f v) == v = v
-  | otherwise = repeatChange f (f v)
-
-
 saturateSimState :: (Ord a) => DelaySim a -> StateKV a -> StateKV a
 saturateSimState sim (sset, oset, f) = (satset, oset, satf) where
-  satset = repeatChange (simClosure sim) sset
+  satset = repeatUChange (simClosure sim) sset
   satf = saturateRank sim satset sset f
 
 

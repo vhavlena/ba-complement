@@ -13,6 +13,7 @@ import Data.Set as Set
 import ComplKV
 import ComplSimKV
 import ComplSchewe
+import ComplSimSchewe
 import BuchiAutomaton
 import BuchiAutomataOper
 import BuchiAutomataExp
