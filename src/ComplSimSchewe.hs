@@ -59,7 +59,7 @@ allRanks fin n sset states = generateSRanksFromConstr fin sset states con where
 
 
 isRankSTight :: (Ord a) => Set.Set a -> RankFunc a -> Bool
-isRankSTight st f = (not $ Map.null f) && (odd mRank) && (Set.isSubsetOf odds ranks) where
+isRankSTight st f = (length (filter (odd) $ Map.elems f) > 0) && (odd mRank) && (Set.isSubsetOf odds ranks) where
   ranks = Set.fromList $ Map.elems f
   mRank = Set.findMax ranks
   odds = Set.fromList [x | x <- [1..mRank], odd x]
@@ -81,6 +81,13 @@ isStateSimValid _ (Prefix _) = True
 isStateSimValid rel (Suffix (sset, oset, f, i)) = Set.foldr (&&) True $
   Set.map (\(x,y) -> (Map.findWithDefault 0 x f) <= (evenCeil (Map.findWithDefault 0 y f))) $
   Set.intersection rel (Set.cartesianProduct sset sset)
+
+
+saturateSimState :: (Ord a) => DelaySim a -> StateSchewe a -> StateSchewe a
+saturateSimState _ s@(Prefix _) = s
+saturateSimState sim (Suffix (sset, oset, f, i)) = Suffix (satset, oset, satf, i) where
+  satset = repeatUChange (simClosure sim) sset
+  satf = saturateRank sim satset sset f
 
 
 generateSRanksFromConstr :: (Ord a) => Set.Set a -> Set.Set a -> [a] -> [(a, Int)] -> Set.Set (RankFunc a)
@@ -108,19 +115,19 @@ iniSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (StateSchewe a)
 iniSchewe (BuchiAutomaton st ini fin _) = Set.singleton $ Prefix ini
 
 
-succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> StateSchewe a -> b
+succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> StateSchewe a -> b
   -> Set.Set (StateSchewe a)
-succSchewe (BuchiAutomaton states _ fin tr) (Prefix sset) sym = Set.union succs1 succs2 where
+succSchewe (BuchiAutomaton states _ fin tr) _ (Prefix sset) sym = Set.union succs1 succs2 where
   funcs = Set.toList $ allRanks fin (Set.size states) sset (Set.toList states)
   succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
-succSchewe (BuchiAutomaton st _ fin tr) (Suffix (sset, oset, f, i)) sym = Set.fromList succs where
-  funcs = filter (\x -> (rankOf x) == (rankOf f)) $ Set.toList $ generateRanking fin f sset (Set.toList st) sym tr
+succSchewe (BuchiAutomaton st _ fin tr) sim (Suffix (sset, oset, f, i)) sym = Set.fromList $ map (saturateSimState sim) $ filter (isStateSimValid sim) succs where
+  funcs = filter (\x -> (rankOddOf x) == (rankOddOf f)) $ Set.toList $ generateRanking fin f sset (Set.toList st) sym tr
   nsset = succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
           else [Suffix (nsset, (rankImage (indnew f') f'), f', indnew f') | f' <- funcs]
   indnew f' = (i+2) `mod` ((rankOf f') + 1)
 
 
-complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> [b] -> BuchiAutomaton (StateSchewe a) b
-complSimSchewe orig alp = constrFromOrig alp (succSchewe orig) (iniSchewe orig) (isFinSchewe)
+complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> [b] -> BuchiAutomaton (StateSchewe a) b
+complSimSchewe orig sim alp = constrFromOrig alp (succSchewe orig sim) (iniSchewe orig) (isFinSchewe)
