@@ -50,7 +50,7 @@ rankOf = maximum . Map.elems
 
 
 rankOddOf :: (Ord a) => RankFunc a -> Int
-rankOddOf = maximum . filter (odd) . Map.elems
+rankOddOf f = if null $ filter (odd) $ Map.elems f then error $ show $ Map.elems f else maximum $ filter (odd) $ Map.elems f
 
 
 allRanks :: (Ord a) => Set.Set a -> Int -> Set.Set a -> [a] -> Set.Set (RankFunc a)
@@ -59,7 +59,7 @@ allRanks fin n sset states = generateSRanksFromConstr fin sset states con where
 
 
 isRankSTight :: (Ord a) => Set.Set a -> RankFunc a -> Bool
-isRankSTight st f = (length (filter (odd) $ Map.elems f) > 0) && (odd mRank) && (Set.isSubsetOf odds ranks) where
+isRankSTight st f = (not $ null (filter (odd) $ Map.elems f) ) && (Set.isSubsetOf odds ranks) where
   ranks = Set.fromList $ Map.elems f
   mRank = Set.findMax ranks
   odds = Set.fromList [x | x <- [1..mRank], odd x]
@@ -73,19 +73,19 @@ saturateRank :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a -> RankFunc a ->
 saturateRank sim satset sset f = if Set.null sset then f else  Map.union (Map.fromList [(s, val s) | s <- add]) f where
   add = Set.toList $ Set.difference satset sset
   gr s = Set.map (snd) $ Set.filter (\(x,y) -> x == s && Set.member y sset) sim
-  val s = evenCeil $ Set.findMin $ Set.map (\x -> Map.findWithDefault 0 x f) (gr s)
+  val s = evenCeil $ Set.findMin $ Set.map (f Map.!) (gr s)
 
 
 isStateSimValid :: (Ord a) => DelaySim a -> StateSchewe a -> Bool
 isStateSimValid _ (Prefix _) = True
-isStateSimValid rel (Suffix (sset, oset, f, i)) = Set.foldr (&&) True $
+isStateSimValid rel (Suffix (sset, oset, f, i)) = (isRankSTight sset f) && (Set.foldr (&&) True $
   Set.map (\(x,y) -> (Map.findWithDefault 0 x f) <= (evenCeil (Map.findWithDefault 0 y f))) $
-  Set.intersection rel (Set.cartesianProduct sset sset)
+  Set.intersection rel (Set.cartesianProduct sset sset))
 
 
 saturateSimState :: (Ord a) => DelaySim a -> StateSchewe a -> StateSchewe a
 saturateSimState _ s@(Prefix _) = s
-saturateSimState sim (Suffix (sset, oset, f, i)) = Suffix (satset, oset, satf, i) where
+saturateSimState sim (Suffix (sset, oset, f, i)) =   Suffix (satset, oset, satf, i) where
   satset = repeatUChange (simClosure sim) sset
   satf = saturateRank sim satset sset f
 
@@ -121,7 +121,7 @@ succSchewe (BuchiAutomaton states _ fin tr) _ (Prefix sset) sym = Set.union succ
   funcs = Set.toList $ allRanks fin (Set.size states) sset (Set.toList states)
   succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
-succSchewe (BuchiAutomaton st _ fin tr) sim (Suffix (sset, oset, f, i)) sym = Set.fromList $ map (saturateSimState sim) $ filter (isStateSimValid sim) succs where
+succSchewe (BuchiAutomaton st _ fin tr) sim (Suffix (sset, oset, f, i)) sym = Set.fromList $ filter (isStateSimValid sim)  succs where
   funcs = filter (\x -> (rankOddOf x) == (rankOddOf f)) $ Set.toList $ generateRanking fin f sset (Set.toList st) sym tr
   nsset = succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
