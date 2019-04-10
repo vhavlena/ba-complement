@@ -124,7 +124,7 @@ succSchewe (BuchiAutomaton states _ fin tr) sim (Prefix sset) sym = Set.union su
   funcs set = Set.toList $ allRanks sim fin (Set.size states) set (Set.toList states)
   succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs $ succSet sset sym tr]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
-succSchewe (BuchiAutomaton st _ fin tr) sim (Suffix (sset, oset, f, i)) sym = Set.fromList $ map (saturateSimState sim) $ filter (isStateSimValid sim) succs where
+succSchewe (BuchiAutomaton st _ fin tr) sim (Suffix (sset, oset, f, i)) sym = Set.fromList $ filter (isStateSimValid sim) $ map (saturateSimState sim) succs where
   funcs = filter (\x -> (rankOddOf x) == (rankOddOf f)) $ Set.toList $ generateRanking sim fin f sset (Set.toList st) sym tr
   nsset = succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
