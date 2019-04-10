@@ -59,7 +59,7 @@ rankOf = maximum . Map.elems
 
 allRanks :: (Ord a) => Set.Set a -> Int -> Set.Set a -> [a] -> Set.Set (RankFunc a)
 allRanks fin n sset states = generateSRanksFromConstr fin sset states con where
-  con = [(q, 2*n) | q <- states]
+  con = [(q, 2*n) | q <- Set.toList $ sset]
 
 
 isRankSTight :: (Ord a) => Set.Set a -> RankFunc a -> Bool
@@ -101,15 +101,15 @@ iniSchewe (BuchiAutomaton st ini fin _) = Set.singleton $ Prefix ini
 succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> StateSchewe a -> b
   -> Set.Set (StateSchewe a)
 succSchewe (BuchiAutomaton states _ fin tr) (Prefix sset) sym = Set.union succs1 succs2 where
-  funcs = Set.toList $ allRanks fin (Set.size states) sset (Set.toList states)
-  succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs]
+  funcs set = Set.toList $ allRanks fin (Set.size states) set (Set.toList states)
+  succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs $ succSet sset sym tr]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
 succSchewe (BuchiAutomaton st _ fin tr) (Suffix (sset, oset, f, i)) sym = Set.fromList succs where
   funcs = filter (\x -> (rankOf x) == (rankOf f)) $ Set.toList $ generateRanking fin f sset (Set.toList st) sym tr
   nsset = succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
           else [Suffix (nsset, (rankImage (indnew f') f'), f', indnew f') | f' <- funcs]
-  indnew f' = (i+2) `mod` ((rankOf f') + 1)
+  indnew f' = (i+2) `mod` ( ((rankOf f') + 1))
 
 
 complSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> [b] -> BuchiAutomaton (StateSchewe a) b
