@@ -27,8 +27,14 @@ tmpFileSkeleton = "tempfa2d3e-ds1.ba"
 defaultOutName = "out.ba"
 
 
+data Algorithms =
+  Schewe
+  | ScheweSim
+  deriving (Eq)
+
+
 data ProgArgs =
-  Compl FilePath FilePath
+  Compl Algorithms FilePath FilePath
   | Help
   | Error
 
@@ -36,8 +42,15 @@ data ProgArgs =
 parseArgs :: [String] -> ProgArgs
 parseArgs args
   | (length args) == 1 && (last args) == "--help" = Help
-  | (length args) == 1 = Compl (head args) defaultOutName
-  | (length args) == 3 && (args !! 1) == "-o" = Compl (head args) (last args)
+  | (length args) > 1 && (args !! 0) == "--schewe" = parseArgsAlg Schewe $ tail args
+  | (length args) > 1 && (args !! 0) == "--schewesim" = parseArgsAlg ScheweSim $ tail args
+  | otherwise = Error
+
+
+parseArgsAlg :: Algorithms -> [String] -> ProgArgs
+parseArgsAlg alg args
+  | (length args) == 1 = Compl alg (head args) defaultOutName
+  | (length args) == 3 && (args !! 1) == "-o" = Compl alg (head args) (last args)
   | otherwise = Error
 
 
@@ -45,13 +58,14 @@ main = do
   args <- getArgs
   start <- getCurrentTime
   case (parseArgs args) of
-    Compl autname outname -> do
+    Compl alg autname outname -> do
       aut <- RA.parseFile autname
       relExt <- RR.rabitActionRel autname
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
-      let compl = trimBA $ complSimSchewe (aut) rel $ Set.toList (alph aut)
+      let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
+                  else trimBA $ complSimSchewe (aut) rel $ Set.toList (alph aut)
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
       putStrLn $ show rel
@@ -61,6 +75,8 @@ main = do
       putStrLn $ "Check: " ++ (show res)
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
+    Error -> do
+      putStrLn "Bad input parameters."
 
 
 

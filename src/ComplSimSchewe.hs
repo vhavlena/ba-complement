@@ -13,36 +13,11 @@ module ComplSimSchewe (
 import Simulation
 import BuchiAutomaton
 import BuchiAutomataOper
+import ComplSchewe
 import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.List as Lst
-
-
-type RankFunc a = Map.Map a Int
-type SufSchewe a = (Set.Set a, Set.Set a, RankFunc a, Int)
-
-data StateSchewe a =
-  Prefix (Set.Set a)
-  | Suffix (SufSchewe a)
-  deriving (Show)
-
-
-instance (Eq a) => Eq (StateSchewe a) where
-  (Prefix x) == (Prefix y) = x == y
-  (Suffix x) == (Suffix y) = x == y
-  _ == _ = False
-
-instance (Ord a) => Ord (StateSchewe a) where
-  (Prefix x) <= (Prefix y) = x <= y
-  (Suffix x) <= (Suffix y) = x <= y
-  (Prefix _) <= _ = True
-  _ <= _ = False
-
-
--- extendRank :: (Ord a) => Set.Set a -> RankFunc a -> RankFunc a
--- extendRank sset f = Map.union f $ Map.fromList [(s,1) | s <- add] where
---   add = Set.toList $ Set.difference sset (Map.keysSet f)
 
 
 rankOf :: (Ord a) => RankFunc a -> Int

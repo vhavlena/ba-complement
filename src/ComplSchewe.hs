@@ -7,6 +7,9 @@ License     : GPL-3
 
 module ComplSchewe (
   complSchewe
+  , StateSchewe(..)
+  , RankFunc
+  , SufSchewe
 ) where
 
 
