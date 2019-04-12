@@ -48,7 +48,7 @@ isRankSTight st sim f = (oneStep) && (not $ null (filter (odd) $ Map.elems f) ) 
   mRank = Set.findMax ranks
   odds = Set.fromList [x | x <- [1..mRank], odd x]
   mRankSts = Map.keysSet $ Map.filter (mRank==) f
-  oneStep = if even mRank then Set.foldr (\(x,y) b -> b && ((f Map.! y) == mRank - 1)) True $ Set.filter (\(x,y) -> (Set.member x mRankSts) && (Set.member y st)) sim
+  oneStep = if even mRank then Set.foldr (\(x,y) b -> b && ((f Map.! y) == mRank - 1)) True $ Set.filter (\(x,y) -> (x /= y) && (Set.member x mRankSts) && (Set.member y st)) sim
             else True
 
 
@@ -57,7 +57,7 @@ rankImage i = Map.keysSet . Map.filterWithKey (\_ v -> v == i)
 
 
 saturateRank :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a -> Set.Set a -> RankFunc a -> RankFunc a
-saturateRank sim fin satset sset f = if Set.null sset then f else  Map.union (Map.fromList [(s, val s) | s <- add]) f where
+saturateRank sim fin satset sset f = if Set.null sset then f else Map.union (Map.fromList [(s, val s) | s <- add]) f where
   add = Set.toList $ Set.difference satset sset
   gr s = Set.map (snd) $ Set.filter (\(x,y) -> x == s && Set.member y sset) sim
   val s = evenCeilFin s fin $ Set.findMin $ Set.map (f Map.!) (gr s)
@@ -77,7 +77,7 @@ isStateRankValid rel (Suffix (sset, oset, f, i)) = isRankSTight sset rel f
 
 saturateSimState :: (Ord a) => DelaySim a -> Set.Set a -> StateSchewe a -> StateSchewe a
 saturateSimState sim _ (Prefix sset) = Prefix $ repeatUChange (simClosure sim) sset
-saturateSimState sim fin (Suffix (sset, oset, f, i)) =  Suffix (satset, oset, satf, i) where
+saturateSimState sim fin (Suffix (sset, oset, f, i)) = Suffix (satset, oset, satf, i) where
   satset = repeatUChange (simClosure sim) sset
   satf = saturateRank sim fin satset sset f
 
@@ -95,7 +95,7 @@ generateRanking :: (Ord a, Ord b) => DelaySim a -> Set.Set a -> RankFunc a -> Se
   -> Transitions a b -> Set.Set (RankFunc a)
 generateRanking sim fin f act states sym  tr = generateSRanksFromConstr sim fin act states rest where
   rest = Map.toList $ Map.fromListWith (min)
-    [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
+    [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
 isFinSchewe :: StateSchewe a -> Bool

@@ -36,7 +36,7 @@ def main():
     complbin = sys.argv[1]
     autfolder = sys.argv[2]
     texout = False
-    AUTOMATA = 5
+    AUTOMATA = 20
 
     for o, a in opts:
         if o in ("-t", "--tex"):
@@ -53,7 +53,7 @@ def main():
     files = files[:AUTOMATA]
 
     print_config(AUTOMATA)
-    print("Automaton: valid, Schewe, Schewe+sat, Schewe+rem, Schewe+comb")
+    print("Automaton: valid, Schewe, Schewe+comb, Schewe+sat, Schewe+rem")
 
     res = [None] * 4
     for autfile in files:
