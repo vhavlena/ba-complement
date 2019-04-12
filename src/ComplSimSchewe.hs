@@ -7,6 +7,7 @@ License     : GPL-3
 
 module ComplSimSchewe (
   complSimSchewe
+  , SimAlg(..)
 ) where
 
 
@@ -18,6 +19,14 @@ import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.List as Lst
+
+
+data SimAlg =
+  Saturation
+  | Removing
+  | Combination
+  | None
+  deriving (Eq)
 
 
 rankOf :: (Ord a) => RankFunc a -> Int
@@ -61,6 +70,11 @@ isStateSimValid rel (Suffix (sset, oset, f, i)) = (isRankSTight sset rel f) && (
   Set.intersection rel (Set.cartesianProduct sset sset))
 
 
+isStateRankValid :: (Ord a) => DelaySim a -> StateSchewe a -> Bool
+isStateRankValid _ (Prefix _) = True
+isStateRankValid rel (Suffix (sset, oset, f, i)) = isRankSTight sset rel f
+
+
 saturateSimState :: (Ord a) => DelaySim a -> Set.Set a -> StateSchewe a -> StateSchewe a
 saturateSimState sim _ (Prefix sset) = Prefix $ repeatUChange (simClosure sim) sset
 saturateSimState sim fin (Suffix (sset, oset, f, i)) =  Suffix (satset, oset, satf, i) where
@@ -93,19 +107,30 @@ iniSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (StateSchewe a)
 iniSchewe (BuchiAutomaton st ini fin _) = Set.singleton $ Prefix ini
 
 
-succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> StateSchewe a -> b
+succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b
+  -> DelaySim a
+  -> (StateSchewe a -> Bool)
+  -> (StateSchewe a -> StateSchewe a)
+  -> StateSchewe a
+  -> b
   -> Set.Set (StateSchewe a)
-succSchewe (BuchiAutomaton states _ fin tr) sim (Prefix sset) sym = Set.union succs1 succs2 where
+succSchewe (BuchiAutomaton states _ fin tr) sim _ _ (Prefix sset) sym = Set.union succs1 succs2 where
   funcs set = Set.toList $ allRanks sim fin (Set.size states) set (Set.toList states)
   succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs $ succSet sset sym tr]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
-succSchewe (BuchiAutomaton st _ fin tr) sim (Suffix (sset, oset, f, i)) sym = Set.fromList $ filter (isStateSimValid sim) $ map (saturateSimState sim fin) succs where
+succSchewe (BuchiAutomaton st _ fin tr) sim flt sat (Suffix (sset, oset, f, i)) sym = Set.fromList $ filter (flt) $ map (sat) succs where
   funcs = filter (\x -> (rankOddOf x) == (rankOddOf f)) $ Set.toList $ generateRanking sim fin f sset (Set.toList st) sym tr
   nsset = succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
           else [Suffix (nsset, (rankImage (indnew f') f'), f', indnew f') | f' <- funcs]
-  indnew f' = (i+2) `mod` (min (2*(Set.size st)) ((rankOf f') + 1))
+  indnew f' = (i+2) `mod` (min (2*(Set.size st)) (evenCeil ((rankOf f') + 1)))
 
 
-complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> [b] -> BuchiAutomaton (StateSchewe a) b
-complSimSchewe orig sim alp = constrFromOrig alp (succSchewe orig sim) (iniSchewe orig) (isFinSchewe)
+complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b
+  -> DelaySim a
+  -> [b]
+  -> SimAlg
+  -> BuchiAutomaton (StateSchewe a) b
+complSimSchewe orig sim alp alg = constrFromOrig alp (succSchewe orig sim (flt) (sat)) (iniSchewe orig) (isFinSchewe) where
+  sat = if (alg == Saturation) || (alg == Combination) then saturateSimState sim $ finals orig else id
+  flt = if (alg == Removing) || (alg == Combination) then isStateSimValid sim else isStateRankValid sim

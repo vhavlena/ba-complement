@@ -30,6 +30,8 @@ defaultOutName = "out.ba"
 data Algorithms =
   Schewe
   | ScheweSim
+  | ScheweSimSat
+  | ScheweSimRem
   deriving (Eq)
 
 
@@ -44,7 +46,16 @@ parseArgs args
   | (length args) == 1 && (last args) == "--help" = Help
   | (length args) > 1 && (args !! 0) == "--schewe" = parseArgsAlg Schewe $ tail args
   | (length args) > 1 && (args !! 0) == "--schewesim" = parseArgsAlg ScheweSim $ tail args
+  | (length args) > 1 && (args !! 0) == "--schewesimsat" = parseArgsAlg ScheweSimSat $ tail args
+  | (length args) > 1 && (args !! 0) == "--schewesimrem" = parseArgsAlg ScheweSimRem $ tail args
   | otherwise = Error
+
+
+algSimVar :: Algorithms -> SimAlg
+algSimVar ScheweSim = Combination
+algSimVar ScheweSimSat = Saturation
+algSimVar ScheweSimRem = Removing
+algSimVar _ = None
 
 
 parseArgsAlg :: Algorithms -> [String] -> ProgArgs
@@ -64,11 +75,12 @@ main = do
       let rel = if checkConsitency relExt
                 then getRabitRelation relExt
                 else error "Inconsistent simulation relation"
+          var = algSimVar alg
       let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
-                  else trimBA $ complSimSchewe (aut) rel $ Set.toList (alph aut)
+                  else trimBA $ complSimSchewe (aut) rel (Set.toList $ alph aut) var
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
-      putStrLn $ show rel
+      putStrLn $ "Delayed simulation: " ++ (show $ Set.size rel)
       writeFile outname $ printBARabit $ compl
       putStrLn $ "States: " ++ (show $ Set.size $ states renCompl)
       res <- checkCorrectness renOrig renCompl
