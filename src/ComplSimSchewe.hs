@@ -43,13 +43,20 @@ allRanks sim fin n sset states = generateSRanksFromConstr sim fin sset states co
 
 
 isRankSTight :: (Ord a) => Set.Set a -> DelaySim a -> RankFunc a -> Bool
-isRankSTight st sim f = (oneStep) && (not $ null (filter (odd) $ Map.elems f) ) && (Set.isSubsetOf odds ranks) where
+isRankSTight st _ f = (not $ Map.null f) && (odd mRank) && (Set.isSubsetOf odds ranks) where
   ranks = Set.fromList $ Map.elems f
   mRank = Set.findMax ranks
   odds = Set.fromList [x | x <- [1..mRank], odd x]
-  mRankSts = Map.keysSet $ Map.filter (mRank==) f
-  oneStep = if even mRank then Set.foldr (\(x,y) b -> b && ((f Map.! y) == mRank - 1)) True $ Set.filter (\(x,y) -> (x /= y) && (Set.member x mRankSts) && (Set.member y st)) sim
-            else True
+
+
+-- isRankEvenSTight :: (Ord a) => Set.Set a -> DelaySim a -> RankFunc a -> Bool
+-- isRankEvenSTight st sim f = (oneStep) && (not $ null (filter (odd) $ Map.elems f) ) && (Set.isSubsetOf odds ranks) where
+--   ranks = Set.fromList $ Map.elems f
+--   mRank = Set.findMax ranks
+--   odds = Set.fromList [x | x <- [1..mRank], odd x]
+--   mRankSts = Map.keysSet $ Map.filter (mRank==) f
+--   oneStep = if even mRank then (Set.foldr (\(x,y) b -> b && ((f Map.! y) == mRank - 1) True $ Set.filter (\(x,y) -> (x /= y) && (Set.member x mRankSts) && (Set.member y st)) sim)
+--                           else True
 
 
 rankImage :: (Ord a) => Int -> RankFunc a -> Set.Set a
@@ -60,13 +67,13 @@ saturateRank :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a -> Set.Set a -> 
 saturateRank sim fin satset sset f = if Set.null sset then f else Map.union (Map.fromList [(s, val s) | s <- add]) f where
   add = Set.toList $ Set.difference satset sset
   gr s = Set.map (snd) $ Set.filter (\(x,y) -> x == s && Set.member y sset) sim
-  val s = evenCeilFin s fin $ Set.findMin $ Set.map (f Map.!) (gr s)
+  val s = evenFloorFin s fin $ Set.findMin $ Set.map (f Map.!) (gr s)
 
 
 isStateSimValid :: (Ord a) => DelaySim a -> StateSchewe a -> Bool
 isStateSimValid _ (Prefix _) = True
 isStateSimValid rel (Suffix (sset, oset, f, i)) = (isRankSTight sset rel f) && (Set.foldr (&&) True $
-  Set.map (\(x,y) -> (Map.findWithDefault 0 x f) <= (evenCeil (Map.findWithDefault 0 y f))) $
+  Set.map (\(x,y) -> (f Map.! x) <= (evenCeil (f Map.! y))) $
   Set.intersection rel (Set.cartesianProduct sset sset))
 
 
@@ -93,7 +100,7 @@ generateSRanksFromConstr sim fin sset allst = Set.filter (isRankSTight sset sim)
 
 generateRanking :: (Ord a, Ord b) => DelaySim a -> Set.Set a -> RankFunc a -> Set.Set a -> [a] -> b
   -> Transitions a b -> Set.Set (RankFunc a)
-generateRanking sim fin f act states sym  tr = generateSRanksFromConstr sim fin act states rest where
+generateRanking sim fin f act states sym  tr = generateSRanksFromConstr sim fin (succSet act sym tr) states rest where
   rest = Map.toList $ Map.fromListWith (min)
     [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
 
@@ -118,12 +125,12 @@ succSchewe (BuchiAutomaton states _ fin tr) sim _ _ (Prefix sset) sym = Set.unio
   funcs set = Set.toList $ allRanks sim fin (Set.size states) set (Set.toList states)
   succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs $ succSet sset sym tr]
   succs2 = Set.singleton $ Prefix (succSet sset sym tr)
-succSchewe (BuchiAutomaton st _ fin tr) sim flt sat (Suffix (sset, oset, f, i)) sym = Set.fromList $ filter (flt) $ map (sat) succs where
-  funcs = filter (\x -> (rankOddOf x) == (rankOddOf f)) $ Set.toList $ generateRanking sim fin f sset (Set.toList st) sym tr
+succSchewe (BuchiAutomaton st _ fin tr) sim flt sat (Suffix (sset, oset, f, i)) sym = Set.fromList $ map (sat) $ filter (flt) succs where
+  funcs = filter (\x -> (rankOf x) == (rankOf f)) $ Set.toList $ generateRanking sim fin f sset (Set.toList st) sym tr
   nsset = succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
           else [Suffix (nsset, (rankImage (indnew f') f'), f', indnew f') | f' <- funcs]
-  indnew f' = (i+2) `mod` (min (2*(Set.size st)) (evenCeil ((rankOf f') + 1)))
+  indnew f' = (i+2) `mod` ((rankOf f') + 1)
 
 
 complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b

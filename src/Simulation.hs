@@ -10,6 +10,7 @@ module Simulation (
   , simClosure
   , evenCeil
   , evenCeilFin
+  , evenFloorFin
   , DelaySim
 ) where
 
@@ -37,4 +38,10 @@ evenCeil n = if odd n then n+1 else n
 evenCeilFin :: (Ord a) => a -> Set.Set a -> Int -> Int
 evenCeilFin s fin n
   | Set.member s fin = if odd n then n+1 else n
+  | otherwise = n
+
+
+evenFloorFin :: (Ord a) => a -> Set.Set a -> Int -> Int
+evenFloorFin s fin n
+  | Set.member s fin = if odd n then n-1 else n
   | otherwise = n

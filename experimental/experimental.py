@@ -73,7 +73,7 @@ def get_output(args):
             timeout=TIMEOUT).decode("utf-8")
         parse = parse_output(output)
     except subprocess.TimeoutExpired:
-        parse = None, None
+        parse = None, None, None, None
     return parse
 
 

@@ -87,7 +87,7 @@ generateSRanksFromConstr fin sset allst = Set.filter (isRankSTight sset) . Set.m
 
 generateRanking :: (Ord a, Ord b) => Set.Set a -> RankFunc a -> Set.Set a -> [a] -> b
   -> Transitions a b -> Set.Set (RankFunc a)
-generateRanking fin f act states sym  tr = generateSRanksFromConstr fin act states rest where
+generateRanking fin f act states sym  tr = generateSRanksFromConstr fin (succSet act sym tr) states rest where
   rest = Map.toList $ Map.fromListWith (min)
     [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
 
