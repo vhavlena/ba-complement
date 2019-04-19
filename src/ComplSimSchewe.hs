@@ -89,6 +89,10 @@ saturateSimState sim fin (Suffix (sset, oset, f, i)) = Suffix (satset, oset, sat
   satf = saturateRank sim fin satset sset f
 
 
+saturateStates :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a
+saturateStates sim sset = repeatUChange (simClosure sim) sset
+
+
 generateSRanksFromConstr :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a -> [a] -> [(a, Int)] -> Set.Set (RankFunc a)
 generateSRanksFromConstr sim fin sset allst = Set.filter (isRankSTight sset sim) . Set.map (\x -> Map.union x baseline) . Set.fromList . map (Map.fromList) . sequence . map (smaller)
   where
@@ -98,11 +102,12 @@ generateSRanksFromConstr sim fin sset allst = Set.filter (isRankSTight sset sim)
       | otherwise = [(x,y') | y' <- [0..y]]
 
 
-generateRanking :: (Ord a, Ord b) => DelaySim a -> Set.Set a -> RankFunc a -> Set.Set a -> [a] -> b
+generateRanking :: (Ord a, Ord b) => DelaySim a -> Set.Set a -> RankFunc a -> Set.Set a -> Set.Set a -> [a] -> b
   -> Transitions a b -> Set.Set (RankFunc a)
-generateRanking sim fin f act states sym  tr = generateSRanksFromConstr sim fin (succSet act sym tr) states rest where
-  rest = Map.toList $ Map.fromListWith (min)
-    [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr]
+generateRanking sim fin f act next states sym  tr = generateSRanksFromConstr sim fin next states rest where
+  rest = Map.toList $ Map.fromListWith (min) $
+    [(q', f Map.! q) | q <- Set.toList act, q' <- succTransList q sym tr] ++
+    [(q', 2*(length states)) | q' <- Set.toList $ Set.difference next (succSet act sym tr)]
 
 
 isFinSchewe :: StateSchewe a -> Bool
@@ -117,17 +122,18 @@ iniSchewe (BuchiAutomaton st ini fin _) = Set.singleton $ Prefix ini
 succSchewe :: (Ord a, Ord b) => BuchiAutomaton a b
   -> DelaySim a
   -> (StateSchewe a -> Bool)
-  -> (StateSchewe a -> StateSchewe a)
+  -> (Set.Set a -> Set.Set a)
   -> StateSchewe a
   -> b
   -> Set.Set (StateSchewe a)
-succSchewe (BuchiAutomaton states _ fin tr) sim _ _ (Prefix sset) sym = Set.union succs1 succs2 where
+succSchewe (BuchiAutomaton states _ fin tr) sim flt sat (Prefix sset) sym = Set.union succs1 succs2 where
   funcs set = Set.toList $ allRanks sim fin (Set.size states) set (Set.toList states)
-  succs1 = Set.fromList [Suffix (succSet sset sym tr, Set.empty, f', 0) | f' <- funcs $ succSet sset sym tr]
-  succs2 = Set.singleton $ Prefix (succSet sset sym tr)
-succSchewe (BuchiAutomaton st _ fin tr) sim flt sat (Suffix (sset, oset, f, i)) sym = Set.fromList $ map (sat) $ filter (flt) succs where
-  funcs = filter (\x -> (rankOf x) == (rankOf f)) $ Set.toList $ generateRanking sim fin f sset (Set.toList st) sym tr
-  nsset = succSet sset sym tr
+  nsset = sat $ succSet sset sym tr
+  succs1 = Set.fromList [Suffix (nsset, Set.empty, f', 0) | f' <- funcs nsset]
+  succs2 = Set.singleton $ Prefix nsset
+succSchewe (BuchiAutomaton st _ fin tr) sim flt sat (Suffix (sset, oset, f, i)) sym = Set.fromList $ filter (flt) succs where
+  funcs = filter (\x -> (rankOf x) == (rankOf f)) $ Set.toList $ generateRanking sim fin f sset nsset (Set.toList st) sym tr
+  nsset = sat $ succSet sset sym tr
   succs = if not $ Set.null oset then [Suffix (nsset, Set.intersection (succSet oset sym tr) (rankImage i f'), f', i) | f' <- funcs]
           else [Suffix (nsset, (rankImage (indnew f') f'), f', indnew f') | f' <- funcs]
   indnew f' = (i+2) `mod` ((rankOf f') + 1)
@@ -139,5 +145,5 @@ complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b
   -> SimAlg
   -> BuchiAutomaton (StateSchewe a) b
 complSimSchewe orig sim alp alg = constrFromOrig alp (succSchewe orig sim (flt) (sat)) (iniSchewe orig) (isFinSchewe) where
-  sat = if (alg == Saturation) || (alg == Combination) then saturateSimState sim $ finals orig else id
-  flt = if (alg == Removing) || (alg == Combination) then isStateSimValid sim else isStateRankValid sim
+  sat = if (alg == Saturation) || (alg == Combination) then saturateStates sim else id
+  flt = isStateSimValid sim
