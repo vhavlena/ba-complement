@@ -19,7 +19,7 @@ VALIDLINE = -2
 TIMELINE = -1
 STATESLINE = -3
 DELAYSIM = -4
-TIMEOUT = 600 #in seconds
+TIMEOUT = 300 #in seconds
 AUTOMATA = 20
 
 def main():
@@ -98,9 +98,13 @@ def format_output(parse):
     return "{0} {1}".format("N/A" if parse[0] is None else parse[0], "TO" if parse[2] is None else parse[2])
 
 
+def format_output_con(parse):
+    return "{0}".format("TO" if parse[2] is None else parse[2])
+
+
 def print_output(filename, out):
-    print("{0}: {1}\t {2}\t {3}\t {4}".format(filename, format_output(out[0]), \
-        format_output(out[1]), format_output(out[2]), format_output(out[3])))
+    print("{0}: {1}\t {2}\t {3}\t {4}".format(filename, format_output_con(out[0]), \
+        format_output_con(out[1]), format_output_con(out[2]), format_output_con(out[3])))
 
 
 def help_err():
