@@ -11,7 +11,7 @@ module Simulation (
   , evenCeil
   , evenCeilFin
   , evenFloorFin
-  , DelaySim
+  , Simulation(..)
 ) where
 
 
@@ -19,15 +19,20 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 
 
-type DelaySim a = Set.Set (a, a)
+--type Simulation a = Set.Set (a, a)
+data Simulation a =
+  Direct (Set.Set (a, a))
+  | Delayed (Set.Set (a, a))
 
 repeatUChange f v
   | (f v) == v = v
   | otherwise = repeatUChange f (f v)
 
 
-simClosure :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a
-simClosure sim sset = Set.fromList $ lsim >>= \(x,y) -> if y `elem` sset then return x else [] where
+simClosure :: (Ord a) => Simulation a -> Set.Set a -> Set.Set a
+simClosure (Delayed sim) sset = Set.fromList $ lsim >>= \(x,y) -> if y `elem` sset then return x else [] where
+  lsim = Set.toList sim
+simClosure (Direct sim) sset = Set.fromList $ lsim >>= \(x,y) -> if y `elem` sset then return x else [] where
   lsim = Set.toList sim
 
 

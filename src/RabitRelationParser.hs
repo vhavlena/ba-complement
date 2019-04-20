@@ -79,11 +79,11 @@ parseRabitRelation = do
 -- Part with a communication with the RABIT tool
 --------------------------------------------------------------------------------------------------------------
 
-rabitActionRel :: FilePath -> IO RabitRelationExt
-rabitActionRel autname = do
+rabitActionRel :: FilePath -> String -> IO RabitRelationExt
+rabitActionRel autname param = do
   copyFile autname (autname ++ "1")
   out <- readProcess "java" ["-jar", rabitPath ++ "RABIT.jar",
-    autname, autname ++ "1", "-delsim"] []
+    autname, autname ++ "1", param] []
   removeFile (autname ++ "1")
   return $ parseString out
 

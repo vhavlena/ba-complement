@@ -10,6 +10,7 @@ import System.Environment
 import System.Directory
 import Data.Set as Set
 
+import Simulation
 import ComplKV
 import ComplSimKV
 import ComplSchewe
@@ -25,6 +26,7 @@ import qualified RabitRelationParser as RR
 
 tmpFileSkeleton = "tempfa2d3e-ds1.ba"
 defaultOutName = "out.ba"
+remOpt = OptDelayed
 
 
 data Algorithms =
@@ -32,6 +34,13 @@ data Algorithms =
   | ScheweSim
   | ScheweSimSat
   | ScheweSimRem
+  deriving (Eq)
+
+
+data RemOption =
+  OptDelayed
+  | OptDirect
+  | OptComb
   deriving (Eq)
 
 
@@ -65,22 +74,32 @@ parseArgsAlg alg args
   | otherwise = Error
 
 
+getConsRel :: RR.RabitRelationExt -> RabitRelation
+getConsRel rel =
+  if checkConsitency rel then getRabitRelation rel
+  else error "Inconsistent simulation relation"
+
+
 main = do
   args <- getArgs
   start <- getCurrentTime
   case (parseArgs args) of
     Compl alg autname outname -> do
       aut <- RA.parseFile autname
-      relExt <- RR.rabitActionRel autname
-      let rel = if checkConsitency relExt
-                then getRabitRelation relExt
-                else error "Inconsistent simulation relation"
+      relExt <- RR.rabitActionRel autname "-delsim"
+      dirExt <- RR.rabitActionRel autname "-dirsim"
+      let reldel = Delayed $ getConsRel relExt
+          reldir = Direct $ getConsRel dirExt
           var = algSimVar alg
+          rel = case remOpt of
+            OptComb -> [reldel, reldir]
+            OptDelayed -> [reldel]
+            OptDirect -> [reldir]
       let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
                   else trimBA $ complSimSchewe (aut) rel (Set.toList $ alph aut) var
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
-      putStrLn $ "Delayed simulation: " ++ (show $ Set.size rel)
+      putStrLn $ "Delayed simulation: " ++ (show $ 0)
       writeFile outname $ printBARabit $ compl
       putStrLn $ "States: " ++ (show $ Set.size $ states renCompl)
       res <- checkCorrectness renOrig renCompl

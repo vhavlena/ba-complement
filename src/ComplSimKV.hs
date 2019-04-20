@@ -48,31 +48,31 @@ isFinSimKV :: StateKV a -> Bool
 isFinSimKV (_, b, _) = Set.null b
 
 
-iniSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> Set.Set (StateKV a)
+iniSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Simulation a -> Set.Set (StateKV a)
 iniSimKV (BuchiAutomaton st ini fin _) sim =
   Set.fromList $ map (saturateSimState sim) [(ini, Set.empty, f) | f <- Set.toList $ allRanks fin (Set.size st) (Set.toList ini)]
 
 
-isStateSimValid :: (Ord a) => DelaySim a -> StateKV a -> Bool
-isStateSimValid rel (sset, oset, f) = Set.foldr (&&) True $
+isStateSimValid :: (Ord a) => Simulation a -> StateKV a -> Bool
+isStateSimValid (Delayed rel) (sset, oset, f) = Set.foldr (&&) True $
   Set.map (\(x,y) -> (Map.findWithDefault 0 x f) <= (evenCeil (Map.findWithDefault 0 y f))) $
   Set.intersection rel (Set.cartesianProduct sset sset)
 
 
-saturateRank :: (Ord a) => DelaySim a -> Set.Set a -> Set.Set a -> RankFunc a -> RankFunc a
-saturateRank sim satset sset f = if Set.null sset then f else  Map.union f $ Map.fromList [(s, val s) | s <- add] where
+saturateRank :: (Ord a) => Simulation a -> Set.Set a -> Set.Set a -> RankFunc a -> RankFunc a
+saturateRank (Delayed sim) satset sset f = if Set.null sset then f else  Map.union f $ Map.fromList [(s, val s) | s <- add] where
   add = Set.toList $ Set.difference satset sset
   gr s = Set.map (snd) $ Set.filter (\(x,y) -> x == s && Set.member y sset) sim
   val s = evenCeil $ Set.findMin $ Set.map (\x -> Map.findWithDefault 0 x f) (gr s)
 
 
-saturateSimState :: (Ord a) => DelaySim a -> StateKV a -> StateKV a
+saturateSimState :: (Ord a) => Simulation a -> StateKV a -> StateKV a
 saturateSimState sim (sset, oset, f) = (satset, oset, satf) where
   satset = repeatUChange (simClosure sim) sset
   satf = saturateRank sim satset sset f
 
 
-succSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> StateKV a -> b
+succSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Simulation a -> StateKV a -> b
   -> Set.Set (StateKV a)
 succSimKV (BuchiAutomaton _ _ fin tr) sim (sset, oset, f) sym = Set.fromList $ map (saturateSimState sim) $ filter (isStateSimValid sim) succs where
   funcs = Set.toList $ generateRanking fin f sset sym tr
@@ -82,5 +82,5 @@ succSimKV (BuchiAutomaton _ _ fin tr) sim (sset, oset, f) sym = Set.fromList $ m
     f') | f' <- funcs]
 
 
-complSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> DelaySim a -> [b] -> BuchiAutomaton (StateKV a) b
+complSimKV :: (Ord a, Ord b) => BuchiAutomaton a b -> Simulation a -> [b] -> BuchiAutomaton (StateKV a) b
 complSimKV orig rel alp = constrFromOrig alp (succSimKV orig rel) (iniSimKV orig rel) (isFinSimKV)
