@@ -8,6 +8,7 @@ License     : GPL-3
 module ComplSimSchewe (
   complSimSchewe
   , SimAlg(..)
+  , RemOption(..)
 ) where
 
 
@@ -19,6 +20,13 @@ import qualified AuxFunctions as Aux
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.List as Lst
+
+
+data RemOption =
+  OptDelayed
+  | OptDirect
+  | OptComb
+  deriving (Eq)
 
 
 data SimAlg =
@@ -143,10 +151,13 @@ succSchewe (BuchiAutomaton st _ fin tr) flt sat (Suffix (sset, oset, f, i)) sym 
 
 complSimSchewe :: (Ord a, Ord b) => BuchiAutomaton a b
   -> [Simulation a]
+  -> RemOption
   -> [b]
   -> SimAlg
   -> BuchiAutomaton (StateSchewe a) b
-complSimSchewe orig sim alp alg = constrFromOrig alp (succSchewe orig (flt) (sat)) (iniSchewe orig) (isFinSchewe) where
+complSimSchewe orig sim ind alp alg = constrFromOrig alp (succSchewe orig (flt) (sat)) (iniSchewe orig) (isFinSchewe) where
   sat = if (alg == Saturation) || (alg == Combination) then saturateStates (sim !! 0) else id
-  flt = if (length sim) == 2 then (\x -> (isStateSimValid (sim !! 0) x) && (isStateSimValid (sim !! 1) x))
-              else (\x -> (isStateSimValid (sim !! 0) x))
+  flt = case ind of
+    OptComb -> (\x -> (isStateSimValid (sim !! 0) x) && (isStateSimValid (sim !! 1) x))
+    OptDelayed ->(\x -> (isStateSimValid (sim !! 0) x))
+    OptDirect -> (\x -> (isStateSimValid (sim !! 1) x))

@@ -37,13 +37,6 @@ data Algorithms =
   deriving (Eq)
 
 
-data RemOption =
-  OptDelayed
-  | OptDirect
-  | OptComb
-  deriving (Eq)
-
-
 data ProgArgs =
   Compl Algorithms FilePath FilePath
   | Help
@@ -91,12 +84,9 @@ main = do
       let reldel = Delayed $ getConsRel relExt
           reldir = Direct $ getConsRel dirExt
           var = algSimVar alg
-          rel = case remOpt of
-            OptComb -> [reldel, reldir]
-            OptDelayed -> [reldel]
-            OptDirect -> [reldir]
+          rel = [reldel, reldir]
       let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
-                  else trimBA $ complSimSchewe (aut) rel (Set.toList $ alph aut) var
+                  else trimBA $ complSimSchewe (aut) rel remOpt (Set.toList $ alph aut) var
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
       putStrLn $ "Delayed simulation: " ++ (show $ 0)
