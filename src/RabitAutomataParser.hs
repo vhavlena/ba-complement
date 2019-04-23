@@ -1,8 +1,8 @@
 {-|
-Module      : RabitAutomataParser
-Description : Rabit automata parser
-Author      : Vojtech Havlena, February 2019
-License     : GPL-3
+  Module      : RabitAutomataParser
+  Description : Rabit automata parser
+  Author      : Vojtech Havlena, February 2019
+  License     : GPL-3
 -}
 
 module RabitAutomataParser where

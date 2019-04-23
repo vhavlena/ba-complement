@@ -1,8 +1,8 @@
 {-|
-Module      : RabitRelation
-Description : Rabit simulation relation functions
-Author      : Vojtech Havlena, March 2019
-License     : GPL-3
+  Module      : RabitRelation
+  Description : Rabit simulation relation functions
+  Author      : Vojtech Havlena, March 2019
+  License     : GPL-3
 -}
 
 module RabitRelation (

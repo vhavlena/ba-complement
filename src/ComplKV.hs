@@ -1,3 +1,9 @@
+{-|
+  Module      : ComplKV.hs
+  Description : KV complement
+  Author      : Vojtech Havlena, March 2019
+  License     : GPL-3
+-}
 
 module ComplKV (
   complKV
@@ -31,8 +37,7 @@ oddRanks = Set.fromList . Map.keys . Map.filter (odd)
 
 
 allRanks :: (Ord a) => Set.Set a -> Int -> [a] -> Set.Set (RankFunc a)
-allRanks fin n states = Set.singleton $ Map.fromList [(q, 2*n) | q <- states] --where
-  --con = [(q, 2*n) | q <- states]
+allRanks fin n states = Set.singleton $ Map.fromList [(q, 2*n) | q <- states]
 
 
 generateFromConstr :: (Ord a) => Set.Set a -> [(a, Int)] -> Set.Set (RankFunc a)

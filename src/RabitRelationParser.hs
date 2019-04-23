@@ -1,8 +1,8 @@
 {-|
-Module      : RabitRelationParser
-Description : Rabit relation parser
-Author      : Vojtech Havlena, March 2019
-License     : GPL-3
+  Module      : RabitRelationParser
+  Description : Rabit relation parser
+  Author      : Vojtech Havlena, March 2019
+  License     : GPL-3
 -}
 
 module RabitRelationParser where

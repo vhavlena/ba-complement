@@ -1,8 +1,8 @@
 {-|
-Module      : ComplSchewe.hs
-Description : Schewe rank-based complementation
-Author      : Vojtech Havlena, April 2019
-License     : GPL-3
+  Module      : ComplSchewe.hs
+  Description : Schewe rank-based complementation
+  Author      : Vojtech Havlena, April 2019
+  License     : GPL-3
 -}
 
 module ComplSchewe (

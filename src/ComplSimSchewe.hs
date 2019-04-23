@@ -1,8 +1,8 @@
 {-|
-Module      : ComplSimSchewe.hs
-Description : Schewe rank-based complementation improved via simulations
-Author      : Vojtech Havlena, April 2019
-License     : GPL-3
+  Module      : ComplSimSchewe.hs
+  Description : Schewe rank-based complementation improved via simulations
+  Author      : Vojtech Havlena, April 2019
+  License     : GPL-3
 -}
 
 module ComplSimSchewe (

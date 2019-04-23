@@ -1,3 +1,9 @@
+{-|
+  Module      : BuchiAutomataOper.hs
+  Description : Operations with buchi automata
+  Author      : Vojtech Havlena, February 2019
+  License     : GPL-3
+-}
 
 module BuchiAutomataOper (
   transposeBA

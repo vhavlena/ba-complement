@@ -1,3 +1,9 @@
+{-|
+  Module      : BuchiAutomaton.hs
+  Description : Basic buchi automata definition
+  Author      : Vojtech Havlena, February 2019
+  License     : GPL-3
+-}
 
 module BuchiAutomaton (
   BuchiAutomaton(..)

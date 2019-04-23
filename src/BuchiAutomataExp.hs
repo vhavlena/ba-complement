@@ -1,3 +1,9 @@
+{-|
+  Module      : BuchiAutomataExp.hs
+  Description : Buchi automata export
+  Author      : Vojtech Havlena, February 2019
+  License     : GPL-3
+-}
 
 module BuchiAutomataExp (
   printBA

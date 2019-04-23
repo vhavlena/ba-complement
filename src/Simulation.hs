@@ -1,8 +1,8 @@
 {-|
-Module      : Simulation.hs
-Description : Functions for working with simulations
-Author      : Vojtech Havlena, April 2019
-License     : GPL-3
+  Module      : Simulation.hs
+  Description : Functions for working with simulations
+  Author      : Vojtech Havlena, April 2019
+  License     : GPL-3
 -}
 
 module Simulation (

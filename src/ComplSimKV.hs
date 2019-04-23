@@ -1,8 +1,8 @@
 {-|
-Module      : ComplSimKV.hs
-Description : Improved KV complementation using simulations
-Author      : Vojtech Havlena, April 2019
-License     : GPL-3
+  Module      : ComplSimKV.hs
+  Description : Improved KV complementation using simulations
+  Author      : Vojtech Havlena, April 2019
+  License     : GPL-3
 -}
 
 module ComplSimKV (
