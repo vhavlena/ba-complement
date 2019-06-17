@@ -18,7 +18,7 @@ printList :: (Show a) => String -> [a] -> String
 printList delim arr = intercalate delim (map (show) arr)
 
 
-printListF :: (Show a) => (a -> String) -> String -> [a] -> String
+printListF :: (a -> String) -> String -> [a] -> String
 printListF f delim arr = intercalate delim (map (f) arr)
 
 
@@ -30,7 +30,7 @@ printSet :: (Show a) => String -> Set.Set a -> String
 printSet delim st = printList delim (Set.toList st)
 
 
-printSetF :: (Show a) => (a -> String) -> String -> Set.Set a -> String
+printSetF :: (a -> String) -> String -> Set.Set a -> String
 printSetF f delim st = printListF f delim (Set.toList st)
 
 

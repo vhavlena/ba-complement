@@ -12,6 +12,7 @@ module BuchiAutomataExp (
   , printRabitStateProd
   , printBARabit
   , printBAGoal
+  , printBAGoalF
 ) where
 
 
@@ -94,41 +95,51 @@ printRabitTrans ((from, sym), to) =
 -- Goal export
 --------------------------------------------------------------------------------------------------------------
 
-printBAGoal :: (Show a, Show b, Ord b) => BuchiAutomaton a b -> String
-printBAGoal b@(BuchiAutomaton st ini fin trans) =
+printBAGoalF :: (Ord b) => (a -> String)
+  -> (b -> String)
+  -> BuchiAutomaton a b
+  -> String
+printBAGoalF f g b@(BuchiAutomaton st ini fin trans) =
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" ++
   "<Structure label-on=\"Transition\" type=\"FiniteStateAutomaton\">\n" ++
   "<Alphabet type=\"Propositional\">\n" ++
-  (Aux.printSetF (printLetterGoal) "\n" (alph b)) ++
+  (Aux.printSetF (printLetterGoal g) "\n" (alph b)) ++
   "\n</Alphabet>\n<StateSet>\n" ++
-  (Aux.printSetF (printStateGoal) "\n" st) ++
+  (Aux.printSetF (printStateGoal f) "\n" st) ++
   "\n</StateSet>\n<InitialStateSet>\n" ++
-  (Aux.printSetF (printStateRefGoal) "\n" ini) ++
+  (Aux.printSetF (printStateRefGoal f) "\n" ini) ++
   "\n</InitialStateSet>\n<TransitionSet complete=\"false\">\n" ++
-  (Aux.printListF (printIndTransitionGoal) "\n" trList) ++
+  (Aux.printListF (printIndTransitionGoal f g) "\n" trList) ++
   "\n</TransitionSet>\n<Acc type=\"Buchi\">\n" ++
-  (Aux.printSetF (printStateRefGoal) "\n" fin) ++
+  (Aux.printSetF (printStateRefGoal f) "\n" fin) ++
   "\n</Acc>\n<Properties/>\n</Structure>"
   where
     trList = List.Ind.indexed $ (Map.toList trans) >>= transToArrowList
 
 
-printStateGoal :: (Show a) => a -> String
-printStateGoal st = "<State sid=\"" ++ (show st) ++ "\" />"
+printBAGoal :: (Show a, Show b, Ord b) => BuchiAutomaton a b -> String
+printBAGoal = printBAGoalF (show) (show)
 
 
-printLetterGoal :: (Show b) => b -> String
-printLetterGoal lt = "<Proposition>" ++ (show lt) ++ "</Proposition>"
+printStateGoal :: (a -> String) -> a -> String
+printStateGoal f st = "<State sid=\"" ++ (f st) ++ "\" />"
 
 
-printStateRefGoal :: (Show a) => a -> String
-printStateRefGoal st = "<StateID>" ++ (show st) ++ "</StateID>"
+printLetterGoal :: (b -> String) -> b -> String
+printLetterGoal g lt = "<Proposition>" ++ (g lt) ++ "</Proposition>"
 
 
-printIndTransitionGoal :: (Show a, Show b) => (Int, TransitionArrow a b) -> String
-printIndTransitionGoal (index, (from, sym, to)) =
+printStateRefGoal :: (a -> String) -> a -> String
+printStateRefGoal f st = "<StateID>" ++ (f st) ++ "</StateID>"
+
+
+printIndTransitionGoal :: (a -> String)
+  -> (b -> String)
+  -> (Int, TransitionArrow a b)
+  -> String
+printIndTransitionGoal f g (index, (from, sym, to)) =
   "<Transition tid=\"" ++ (show index) ++ "\">\n" ++
-  "\t<From>" ++ (show from) ++ "</From>\n" ++
-  "\t<To>" ++ (show to) ++ "</To>\n" ++
-  "\t<Label>" ++ (show sym) ++ "</Label>\n" ++
+  "\t<From>" ++ (f from) ++ "</From>\n" ++
+  "\t<To>" ++ (f to) ++ "</To>\n" ++
+  "\t<Label>" ++ (g sym) ++ "</Label>\n" ++
   "</Transition>"

@@ -19,6 +19,7 @@ import Text.Parsec.Prim
 import Text.Parsec.String
 import Text.Parsec.Token
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 
 import BuchiAutomaton
 import qualified AuxFunctions as Aux
@@ -97,3 +98,19 @@ parseRabitBuchiAutomaton = do
 
 getAllStates :: [RabitTransiton] -> Set.Set RabitState
 getAllStates = Set.fromList . concat . map (\((a,_),b) -> [a,b])
+
+
+--------------------------------------------------------------------------------------------------------------
+-- Part with the automata renaming, i.e., [x] -> x
+--------------------------------------------------------------------------------------------------------------
+
+rabitStateToInt :: RabitState -> Int
+rabitStateToInt st = (read $ init $ tail st) :: Int
+
+
+rabitBAtoIntBA :: RabitBuchiAutomaton -> BuchiAutomaton Int String
+rabitBAtoIntBA (BuchiAutomaton st ini fin tr) = BuchiAutomaton st' ini' fin' tr' where
+  st' = Set.map (rabitStateToInt) st
+  ini' = Set.map (rabitStateToInt) ini
+  fin' = Set.map (rabitStateToInt) fin
+  tr' = Map.fromList $ map (\((f,s),t) -> ((rabitStateToInt f, s), Set.map (rabitStateToInt) t)) $ Map.toList tr

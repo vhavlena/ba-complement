@@ -18,15 +18,11 @@ import ComplSimSchewe
 import BuchiAutomaton
 import BuchiAutomataOper
 import BuchiAutomataExp
+import ComplConfig
 
 import RabitRelation
 import qualified RabitAutomataParser as RA
 import qualified RabitRelationParser as RR
-
-
-tmpFileSkeleton = "tempfa2d3e-ds1.ba"
-defaultOutName = "out.ba"
-remOpt = OptDelayed
 
 
 data Algorithm =
@@ -77,7 +73,7 @@ parseArgsAlg alg args
 
 parseArgsExport :: ExportFormat -> [String] -> ProgArgs
 parseArgsExport format args
-  | (length args) == 1 = Export format (head args) defaultOutName
+  | (length args) == 1 = Export format (head args) defaultOutNameGoal
   | (length args) == 3 && (args !! 1) == "-o" = Export format (head args) (last args)
   | otherwise = Error
 
@@ -104,17 +100,23 @@ main = do
                   else trimBA $ complSimSchewe (aut) rel remOpt (Set.toList $ alph aut) var
           renOrig = renameBA 0 aut
           renCompl = renameBA 0 compl
-      putStrLn $ "Delayed simulation: " ++ (show $ 0)
+      --putStrLn $ "Delayed simulation: " ++ (show $ 0)
       writeFile outname $ printBARabit $ compl
       putStrLn $ "States: " ++ (show $ Set.size $ states renCompl)
-      res <- checkCorrectness renOrig renCompl
-      putStrLn $ "Check: " ++ (show res)
+
+      if cfCheckCorrectness then do
+        res <- checkCorrectness renOrig renCompl
+        putStrLn $ "Check: " ++ (show res)
+      else
+        return ()
+
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
     Export format autname outname -> do
       aut <- RA.parseFile autname
-      let expf = if format == Goal then printBAGoal else printBA
-      writeFile outname $ expf aut
+      let baInt = RA.rabitBAtoIntBA aut
+          expf = if format == Goal then printBAGoalF (show) (id) else printBA
+      writeFile outname $ expf baInt
     Error -> do
       putStrLn "Bad input parameters."
 

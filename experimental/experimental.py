@@ -20,7 +20,6 @@ TIMELINE = -1
 STATESLINE = -3
 DELAYSIM = -4
 TIMEOUT = 300 #in seconds
-AUTOMATA = 20
 
 def main():
     #Input parsing
