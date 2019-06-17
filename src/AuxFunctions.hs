@@ -51,3 +51,9 @@ printMapF f mp = printListF (\(x,y) -> (f x)++"->"++(show y)) "," $ Map.toList m
 
 mapSetFromList :: (Ord k, Ord v) => [(k,v)] -> Map.Map k (Set.Set v)
 mapSetFromList = Map.fromListWith (Set.union) . map (\(x,y) -> (x, Set.singleton y))
+
+
+indexedSet :: (Ord a) => Set.Set a -> (Set.Set (Int, a))
+indexedSet st = Set.cartesianProduct ind st where
+  s = (Set.size st) - 1
+  ind = Set.fromList [0..s]

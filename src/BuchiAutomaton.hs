@@ -9,10 +9,12 @@ module BuchiAutomaton (
   BuchiAutomaton(..)
   , Transitions
   , Transition
+  , TransitionArrow
   , succTrans
   , succTransList
   , succSet
   , alph
+  , transToArrowList
 ) where
 
 import qualified Data.List as List
@@ -23,6 +25,7 @@ import qualified AuxFunctions as Aux
 
 type Transitions a b = Map.Map (a, b) (Set.Set a)
 type Transition a b = ((a,b), (Set.Set a))
+type TransitionArrow a b = (a,b,a)
 
 data BuchiAutomaton a b = BuchiAutomaton {
    states :: Set.Set a
@@ -32,7 +35,7 @@ data BuchiAutomaton a b = BuchiAutomaton {
 }
 
 
-alph :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set b
+alph :: (Ord b) => BuchiAutomaton a b -> Set.Set b
 alph (BuchiAutomaton _ _ _ tr) = Set.fromList $ map (\((_,x),_) -> x) $ Map.toList tr
 
 
@@ -47,3 +50,7 @@ succTrans q sym = Map.findWithDefault Set.empty (q,sym)
 succSet :: (Ord a, Ord b) => Set.Set a -> b -> Transitions a b -> Set.Set a
 succSet states sym tr = foldr (Set.union) Set.empty
   [Map.findWithDefault Set.empty (q,sym) tr | q <- Set.toList states]
+
+
+transToArrowList :: Transition a b -> [TransitionArrow a b]
+transToArrowList ((fr, sym), to) = map (\t -> (fr, sym, t)) $ Set.toList to

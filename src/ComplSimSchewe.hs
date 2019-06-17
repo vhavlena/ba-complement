@@ -57,25 +57,8 @@ isRankSTight st f = (not $ Map.null f) && (odd mRank) && (Set.isSubsetOf odds ra
   odds = Set.fromList [x | x <- [1..mRank], odd x]
 
 
--- isRankEvenSTight :: (Ord a) => Set.Set a -> Simulation a -> RankFunc a -> Bool
--- isRankEvenSTight st sim f = (oneStep) && (not $ null (filter (odd) $ Map.elems f) ) && (Set.isSubsetOf odds ranks) where
---   ranks = Set.fromList $ Map.elems f
---   mRank = Set.findMax ranks
---   odds = Set.fromList [x | x <- [1..mRank], odd x]
---   mRankSts = Map.keysSet $ Map.filter (mRank==) f
---   oneStep = if even mRank then (Set.foldr (\(x,y) b -> b && ((f Map.! y) == mRank - 1) True $ Set.filter (\(x,y) -> (x /= y) && (Set.member x mRankSts) && (Set.member y st)) sim)
---                           else True
-
-
 rankImage :: (Ord a) => Int -> RankFunc a -> Set.Set a
 rankImage i = Map.keysSet . Map.filterWithKey (\_ v -> v == i)
-
-
--- saturateRank :: (Ord a) => Simulation a -> Set.Set a -> Set.Set a -> Set.Set a -> RankFunc a -> RankFunc a
--- saturateRank sim fin satset sset f = if Set.null sset then f else Map.union (Map.fromList [(s, val s) | s <- add]) f where
---   add = Set.toList $ Set.difference satset sset
---   gr s = Set.map (snd) $ Set.filter (\(x,y) -> x == s && Set.member y sset) sim
---   val s = evenFloorFin s fin $ Set.findMin $ Set.map (f Map.!) (gr s)
 
 
 isStateSimValid :: (Ord a) => Simulation a -> StateSchewe a -> Bool
@@ -86,18 +69,6 @@ isStateSimValid (Delayed rel) (Suffix (sset, oset, f, i)) = (isRankSTight sset f
 isStateSimValid (Direct rel) (Suffix (sset, oset, f, i)) = (isRankSTight sset f) && (Set.foldr (&&) True $
   Set.map (\(x,y) -> (f Map.! x) <= (f Map.! y)) $
   Set.intersection rel (Set.cartesianProduct sset sset))
-
-
--- isStateRankValid :: (Ord a) => Simulation a -> StateSchewe a -> Bool
--- isStateRankValid _ (Prefix _) = True
--- isStateRankValid rel (Suffix (sset, oset, f, i)) = isRankSTight sset f
-
-
--- saturateSimState :: (Ord a) => Simulation a -> Set.Set a -> StateSchewe a -> StateSchewe a
--- saturateSimState sim _ (Prefix sset) = Prefix $ repeatUChange (simClosure sim) sset
--- saturateSimState sim fin (Suffix (sset, oset, f, i)) = Suffix (satset, oset, satf, i) where
---   satset = repeatUChange (simClosure sim) sset
---   satf = saturateRank sim fin satset sset f
 
 
 saturateStates :: (Ord a) => Simulation a -> Set.Set a -> Set.Set a

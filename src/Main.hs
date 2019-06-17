@@ -29,7 +29,7 @@ defaultOutName = "out.ba"
 remOpt = OptDelayed
 
 
-data Algorithms =
+data Algorithm =
   Schewe
   | ScheweSim
   | ScheweSimSat
@@ -37,8 +37,15 @@ data Algorithms =
   deriving (Eq)
 
 
+data ExportFormat =
+  Goal
+  | Graphviz
+  deriving (Eq)
+
+
 data ProgArgs =
-  Compl Algorithms FilePath FilePath
+  Compl Algorithm FilePath FilePath
+  | Export ExportFormat FilePath FilePath
   | Help
   | Error
 
@@ -50,20 +57,28 @@ parseArgs args
   | (length args) > 1 && (args !! 0) == "--schewesim" = parseArgsAlg ScheweSim $ tail args
   | (length args) > 1 && (args !! 0) == "--schewesimsat" = parseArgsAlg ScheweSimSat $ tail args
   | (length args) > 1 && (args !! 0) == "--schewesimrem" = parseArgsAlg ScheweSimRem $ tail args
+  | (length args) > 1 && (args !! 0) == "--goal" = parseArgsExport Goal $ tail args
   | otherwise = Error
 
 
-algSimVar :: Algorithms -> SimAlg
+algSimVar :: Algorithm -> SimAlg
 algSimVar ScheweSim = Combination
 algSimVar ScheweSimSat = Saturation
 algSimVar ScheweSimRem = Removing
 algSimVar _ = None
 
 
-parseArgsAlg :: Algorithms -> [String] -> ProgArgs
+parseArgsAlg :: Algorithm -> [String] -> ProgArgs
 parseArgsAlg alg args
   | (length args) == 1 = Compl alg (head args) defaultOutName
   | (length args) == 3 && (args !! 1) == "-o" = Compl alg (head args) (last args)
+  | otherwise = Error
+
+
+parseArgsExport :: ExportFormat -> [String] -> ProgArgs
+parseArgsExport format args
+  | (length args) == 1 = Export format (head args) defaultOutName
+  | (length args) == 3 && (args !! 1) == "-o" = Export format (head args) (last args)
   | otherwise = Error
 
 
@@ -96,6 +111,10 @@ main = do
       putStrLn $ "Check: " ++ (show res)
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
+    Export format autname outname -> do
+      aut <- RA.parseFile autname
+      let expf = if format == Goal then printBAGoal else printBA
+      writeFile outname $ expf aut
     Error -> do
       putStrLn "Bad input parameters."
 
