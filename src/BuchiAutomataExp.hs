@@ -11,6 +11,7 @@ module BuchiAutomataExp (
   , printStateProd
   , printRabitStateProd
   , printBARabit
+  , printBARabitF
   , printBAGoal
   , printBAGoalF
 ) where
@@ -85,10 +86,20 @@ printBARabit (BuchiAutomaton _ ini fin trans) = Aux.printSet "\n" ini ++ "\n" ++
   Aux.printSet "\n" fin
 
 
+printBARabitF :: (Show a) => (a -> String) -> BuchiAutomaton a String -> String
+printBARabitF f (BuchiAutomaton _ ini fin trans) = Aux.printSetF f "\n" ini ++ "\n" ++
+  (List.intercalate "" $ map (printRabitTransF f) $ Map.toList trans) ++
+  Aux.printSetF f "\n" fin
+
+
 printRabitTrans :: (Show a) => Transition a String -> String
-printRabitTrans ((from, sym), to) =
+printRabitTrans = printRabitTransF (show)
+
+
+printRabitTransF :: (a -> String) -> Transition a String -> String
+printRabitTransF f ((from, sym), to) =
   unlines $ map (printEdge from sym) $ Set.toList to where
-    printEdge from sym to = sym ++ "," ++ (show from) ++ "->" ++ (show to)
+    printEdge from sym to = sym ++ "," ++ (f from) ++ "->" ++ (f to)
 
 
 --------------------------------------------------------------------------------------------------------------

@@ -6,23 +6,28 @@
 -}
 
 module Simulation (
-  repeatUChange
+  Simulation(..)
+  , repeatUChange
   , simClosure
   , evenCeil
   , evenCeilFin
   , evenFloorFin
-  , Simulation(..)
+  , symmetricSimClosure
+  , symClosure
+  , rabitSimToInt
 ) where
 
 
 import qualified Data.Set as Set
 import qualified Data.Map as Map
+import qualified Data.Tuple as Tp
+import qualified RabitAutomataParser as RP
 
 
---type Simulation a = Set.Set (a, a)
 data Simulation a =
   Direct (Set.Set (a, a))
   | Delayed (Set.Set (a, a))
+  deriving (Show)
 
 repeatUChange f v
   | (f v) == v = v
@@ -50,3 +55,18 @@ evenFloorFin :: (Ord a) => a -> Set.Set a -> Int -> Int
 evenFloorFin s fin n
   | Set.member s fin = if odd n then n-1 else n
   | otherwise = n
+
+
+symmetricSimClosure :: (Ord a) => Simulation a -> Simulation a
+symmetricSimClosure (Direct set) = Direct $ symClosure set
+symmetricSimClosure (Delayed set) = Delayed $ symClosure set
+
+
+symClosure :: (Ord a) => Set.Set (a,a) -> Set.Set (a,a)
+symClosure set = Set.intersection set inv where
+  inv = Set.map (Tp.swap) set
+
+
+rabitSimToInt :: Simulation String -> Simulation Int
+rabitSimToInt (Direct sim) = Direct $ Set.map (\(u,v) -> (RP.rabitStateToInt u, RP.rabitStateToInt v)) sim
+rabitSimToInt (Delayed sim) = rabitSimToInt $ Direct sim

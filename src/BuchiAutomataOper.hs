@@ -18,6 +18,7 @@ module BuchiAutomataOper (
   , isEmptyBA
   , universalBA
   , removeMultipleInitials
+  , quotientSimBA
 ) where
 
 
@@ -25,9 +26,11 @@ import qualified Data.Map as Map
 import qualified Data.Bimap as Bimp
 import qualified Data.Set as Set
 import qualified Data.List as List
+import qualified Data.Maybe as Mb
 import Data.Graph
 import Data.Tree
 import BuchiAutomaton
+import Simulation
 
 type StateMap a = Bimp.Bimap Int a
 type StateProd a b = (a, b, Bool)
@@ -211,3 +214,41 @@ iniProd (BuchiAutomaton _ ini1 _ _) (BuchiAutomaton _ ini2 _ _) =
 intersectionBA :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b -> BuchiAutomaton c b -> BuchiAutomaton (StateProd a c) b
 intersectionBA ba1 ba2 = constrFromOrig alp (succProd ba1 ba2) (iniProd ba1 ba2) (isFinProd ba1 ba2) where
   alp = Set.toList $ Set.union (alph ba1) (alph ba2)
+
+
+--------------------------------------------------------------------------------------------------------------
+-- Part with the quotienting
+--------------------------------------------------------------------------------------------------------------
+
+quotientSimBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Simulation a -> BuchiAutomaton (Set.Set a) b
+quotientSimBA ba (Delayed sim) = quotientBA ba $ symClosure sim
+quotientSimBA ba (Direct sim) = quotientBA ba $ symClosure sim
+
+
+quotientBA :: (Ord a, Ord b) => BuchiAutomaton a b -> Set.Set (a,a) -> BuchiAutomaton (Set.Set a) b
+quotientBA (BuchiAutomaton st ini fin tr) rel = BuchiAutomaton (Set.fromList qtnt) ini' fin' tr' where
+  stLst = Set.toList st
+  qtnt = quotientStates st rel
+  stMap = Map.fromList [(x, Mb.fromJust $ List.find (Set.member x) qtnt) | x <- stLst]
+
+  proj s = Set.map (stMap Map.!) s
+  ini' = proj ini
+  fin' = proj fin
+  tr' = Map.fromList $ map (\((f,s),t) -> ((stMap Map.! f, s), proj t) ) $  Map.toList tr
+
+
+
+quotientStates :: (Ord a) => Set.Set a -> Set.Set (a,a) -> [Set.Set a]
+quotientStates st rel = rt where
+  nums = [1..(Set.size st)]
+  stLst = zip nums $ Set.toList st
+
+  merge [] mr = mr
+  merge ((x,y):xs) mr = merge xs mr' where
+    mr' = map (\(u,v) -> if u == ycol then (xcol, v) else (u,v)) mr
+    col z = fst $ Mb.fromJust $ List.find (\(_,t) -> t == z) mr
+    xcol = col x
+    ycol = col y
+
+  mrg = merge (Set.toList rel) stLst
+  rt = filter (\x -> 0 < (Set.size x)) $ [ Set.fromList $ map (snd) $ filter (\(u,v) -> u == x) mrg | x <- nums]

@@ -33,6 +33,13 @@ data Algorithm =
   deriving (Eq)
 
 
+data Quotient =
+  QuotDirect
+  | QuotDelayed
+  | QuotNone
+  deriving (Eq)
+
+
 data ExportFormat =
   Goal
   | Graphviz
@@ -40,7 +47,7 @@ data ExportFormat =
 
 
 data ProgArgs =
-  Compl Algorithm FilePath FilePath
+  Compl Quotient Algorithm FilePath FilePath
   | Export ExportFormat FilePath FilePath
   | Help
   | Error
@@ -66,9 +73,14 @@ algSimVar _ = None
 
 parseArgsAlg :: Algorithm -> [String] -> ProgArgs
 parseArgsAlg alg args
-  | (length args) == 1 = Compl alg (head args) defaultOutName
-  | (length args) == 3 && (args !! 1) == "-o" = Compl alg (head args) (last args)
+  | (length args) >= 3 && (args !! 1) == "-o" = Compl quotient alg (head args) (last args)
+  | (length args) >= 1 = Compl quotient alg (head args) defaultOutName
   | otherwise = Error
+  where
+    quotient
+      | (last args) == "-qdir" = QuotDirect
+      | (last args) == "-qdel" = QuotDelayed
+      | otherwise = QuotNone
 
 
 parseArgsExport :: ExportFormat -> [String] -> ProgArgs
@@ -84,18 +96,33 @@ getConsRel rel =
   else error "Inconsistent simulation relation"
 
 
+parseItems :: FilePath -> IO (RA.RabitBuchiAutomaton, Simulation String, Simulation String)
+parseItems autname = do
+  autParExp <- RA.parseFile autname
+  relExt <- RR.rabitActionRel autname "-delsim"
+  dirExt <- RR.rabitActionRel autname "-dirsim"
+  let reldel = Delayed $ getConsRel relExt
+      reldir = Direct $ getConsRel dirExt
+  return (autParExp, reldel, reldir)
+
+
 main = do
   args <- getArgs
   start <- getCurrentTime
   case (parseArgs args) of
-    Compl alg autname outname -> do
-      aut <- RA.parseFile autname
-      relExt <- RR.rabitActionRel autname "-delsim"
-      dirExt <- RR.rabitActionRel autname "-dirsim"
-      let reldel = Delayed $ getConsRel relExt
-          reldir = Direct $ getConsRel dirExt
-          var = algSimVar alg
-          rel = [reldel, reldir]
+    Compl quotient alg autname outname -> do
+      (aut1, del1, dir1) <- parseItems autname
+      let autExp
+            | quotient == QuotDirect = renameBA 0 $ quotientSimBA aut1 dir1
+            | quotient == QuotDelayed = renameBA 0 $ quotientSimBA aut1 del1
+            | otherwise = renameBA 0 aut1
+      writeFile tmpFileSimulation $ printBARabitF (RA.rabitState) $ autExp
+      (aut2, reldel, reldir) <- parseItems tmpFileSimulation
+      removeFile tmpFileSimulation
+
+      let var = algSimVar alg
+          rel = [rabitSimToInt reldel, rabitSimToInt reldir]
+          aut = RA.rabitBAtoIntBA aut2
       let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
                   else trimBA $ complSimSchewe (aut) rel remOpt (Set.toList $ alph aut) var
           renOrig = renameBA 0 aut
@@ -140,6 +167,16 @@ checkCorrectness aut1 aut2 = do
 --------------------------------------------------------------------------------------------------------------
 -- Part with the testing functions
 --------------------------------------------------------------------------------------------------------------
+
+quotientTest autname = do
+  aut <- RA.parseFile autname
+  relExt <- RR.rabitActionRel autname "-delsim"
+  dirExt <- RR.rabitActionRel autname "-dirsim"
+  let reldel = Delayed $ getConsRel relExt
+      reldir = Direct $ getConsRel dirExt
+  putStrLn $ show reldel
+  putStrLn $ show $ quotientSimBA aut reldel
+
 
 complBAKV filename = do
   aut <- RA.parseFile filename

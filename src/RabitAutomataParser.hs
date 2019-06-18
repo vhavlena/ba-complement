@@ -104,6 +104,8 @@ getAllStates = Set.fromList . concat . map (\((a,_),b) -> [a,b])
 -- Part with the automata renaming, i.e., [x] -> x
 --------------------------------------------------------------------------------------------------------------
 
+rabitState x = "[" ++ (show x) ++ "]"
+
 rabitStateToInt :: RabitState -> Int
 rabitStateToInt st = (read $ init $ tail st) :: Int
 
