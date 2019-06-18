@@ -52,7 +52,7 @@ def main():
     files = files[:AUTOMATA]
 
     print_config(AUTOMATA)
-    print("Automaton: valid, Schewe, Schewe+comb, Schewe+sat, Schewe+rem")
+    print("Automaton: valid, Schewe, Schewe+comb, Schewe+purge")
 
     res = [None] * 4
     for autfile in files:
@@ -60,8 +60,8 @@ def main():
 
         res[0] = get_output([complbin, "--schewe", filename])
         res[1] = get_output([complbin, "--schewesim", filename])
-        res[2] = get_output([complbin, "--schewesimsat", filename])
-        res[3] = get_output([complbin, "--schewesimrem", filename])
+        #res[2] = get_output([complbin, "--schewesimsat", filename])
+        res[2] = get_output([complbin, "--schewesimrem", filename])
 
         print_output(filename, res)
 
@@ -102,8 +102,8 @@ def format_output_con(parse):
 
 
 def print_output(filename, out):
-    print("{0}: {1}\t {2}\t {3}\t {4}".format(filename, format_output_con(out[0]), \
-        format_output_con(out[1]), format_output_con(out[2]), format_output_con(out[3])))
+    print("{0}: {1}\t {2}\t {3}".format(filename, format_output_con(out[0]), \
+        format_output_con(out[1]), format_output_con(out[2])))
 
 
 def help_err():
