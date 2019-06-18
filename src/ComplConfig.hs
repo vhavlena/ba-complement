@@ -14,5 +14,5 @@ tmpFileSkeleton = "tempfa2d3e-ds1.ba"
 tmpFileSimulation = "tempfa2d3e_ds3.ba"
 defaultOutName = "out.ba"
 defaultOutNameGoal = "out.gff"
-remOpt = OptDelayed
-cfCheckCorrectness = True
+remOpt = OptComb
+cfCheckCorrectness = False

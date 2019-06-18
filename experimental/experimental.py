@@ -17,9 +17,10 @@ import resource
 
 VALIDLINE = -2
 TIMELINE = -1
-STATESLINE = -3
+STATESLINE = -2
 DELAYSIM = -4
 TIMEOUT = 300 #in seconds
+QUOTIENT = ""
 
 def main():
     #Input parsing
@@ -58,10 +59,10 @@ def main():
     for autfile in files:
         filename = os.path.join(autfolder, autfile)
 
-        res[0] = get_output([complbin, "--schewe", filename])
-        res[1] = get_output([complbin, "--schewesim", filename])
+        res[0] = get_output([complbin, "--schewe", filename, QUOTIENT])
+        res[1] = get_output([complbin, "--schewesim", filename, QUOTIENT])
         #res[2] = get_output([complbin, "--schewesimsat", filename])
-        res[2] = get_output([complbin, "--schewesimrem", filename])
+        res[2] = get_output([complbin, "--schewesimrem", filename, QUOTIENT])
 
         print_output(filename, res)
 
@@ -79,18 +80,18 @@ def get_output(args):
 def parse_output(output):
     lines = output.split('\n')
     lines = list(filter(None, lines)) #Remove empty lines
-    valid = lines[VALIDLINE] == "Check: True"
+    valid = None #lines[VALIDLINE] == "Check: True"
     match = re.search("Time: ([0-9]+.[0-9]+)s", lines[TIMELINE])
     time = round(float(match.group(1)), 2)
     states = int(re.search("States: ([0-9]+)", lines[STATESLINE]).group(1))
-    delsim = int(re.search("Delayed simulation: ([0-9]+)", lines[DELAYSIM]).group(1))
+    delsim = None #int(re.search("Delayed simulation: ([0-9]+)", lines[DELAYSIM]).group(1))
     return valid, time, states, delsim
 
 
 
 def print_config(formulas):
     print("Timeout: {0}".format(TIMEOUT))
-    print("Number of formulas: {0}".format(formulas))
+    print("Number of automata: {0}".format(formulas))
 
 
 def format_output(parse):
