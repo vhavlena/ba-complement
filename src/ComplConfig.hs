@@ -15,4 +15,4 @@ tmpFileSimulation = "tempfa2d3e_ds3.ba"
 defaultOutName = "out.ba"
 defaultOutNameGoal = "out.gff"
 remOpt = OptComb
-cfCheckCorrectness = False
+cfCheckCorrectness = True

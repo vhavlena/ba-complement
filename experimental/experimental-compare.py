@@ -62,9 +62,9 @@ def main():
         filename = os.path.join(autfolder, autfile)
 
         subprocess.run([complbin, "--goal", filename, "-o", INPUTG])
-        res[0] = get_output([gbin, "complement", "-m", "safra", INPUTG])
-        res[1] = get_output([gbin, "complement", "-m", "ramsey", "-r", INPUTG])
-        res[2] = get_output([gbin, "complement", "-m", "slice", "-r", INPUTG])
+        res[0] = get_output([gbin, "complement", "-m", "safra", "-t", str(TIMEOUT+1), INPUTG])
+        res[1] = get_output([gbin, "complement", "-m", "ramsey", "-r", "-t", str(TIMEOUT+1), INPUTG])
+        res[2] = get_output([gbin, "complement", "-m", "slice", "-r", "-t", str(TIMEOUT+1), INPUTG])
 
         print_output(filename, res)
 

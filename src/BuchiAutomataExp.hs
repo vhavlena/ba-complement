@@ -113,7 +113,7 @@ printBAGoalF :: (Ord b) => (a -> String)
 printBAGoalF f g b@(BuchiAutomaton st ini fin trans) =
   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" ++
   "<Structure label-on=\"Transition\" type=\"FiniteStateAutomaton\">\n" ++
-  "<Alphabet type=\"Propositional\">\n" ++
+  "<Alphabet type=\"Classical\">\n" ++
   (Aux.printSetF (printLetterGoal g) "\n" (alph b)) ++
   "\n</Alphabet>\n<StateSet>\n" ++
   (Aux.printSetF (printStateGoal f) "\n" st) ++
@@ -137,7 +137,7 @@ printStateGoal f st = "<State sid=\"" ++ (f st) ++ "\" />"
 
 
 printLetterGoal :: (b -> String) -> b -> String
-printLetterGoal g lt = "<Proposition>" ++ (g lt) ++ "</Proposition>"
+printLetterGoal g lt = "<Symbol>" ++ (g lt) ++ "</Symbol>"
 
 
 printStateRefGoal :: (a -> String) -> a -> String
