@@ -125,7 +125,7 @@ main = do
           aut = RA.rabitBAtoIntBA aut2
       let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
                   else trimBA $ complSimSchewe (aut) rel remOpt (Set.toList $ alph aut) var
-          renOrig = renameBA 0 aut
+          renOrig = autExp
           renCompl = renameBA 0 compl
       --putStrLn $ "Delayed simulation: " ++ (show $ 0)
       writeFile outname $ printBARabit $ compl

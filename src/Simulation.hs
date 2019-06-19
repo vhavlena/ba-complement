@@ -69,4 +69,4 @@ symClosure set = Set.intersection set inv where
 
 rabitSimToInt :: Simulation String -> Simulation Int
 rabitSimToInt (Direct sim) = Direct $ Set.map (\(u,v) -> (RP.rabitStateToInt u, RP.rabitStateToInt v)) sim
-rabitSimToInt (Delayed sim) = rabitSimToInt $ Direct sim
+rabitSimToInt (Delayed sim) = Delayed $ Set.map (\(u,v) -> (RP.rabitStateToInt u, RP.rabitStateToInt v)) sim
