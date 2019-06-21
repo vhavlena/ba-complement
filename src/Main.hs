@@ -48,7 +48,7 @@ data ExportFormat =
 
 data ProgArgs =
   Compl Quotient Algorithm FilePath FilePath
-  | Export ExportFormat FilePath FilePath
+  | Export Quotient ExportFormat FilePath FilePath
   | Help
   | Error
 
@@ -85,9 +85,14 @@ parseArgsAlg alg args
 
 parseArgsExport :: ExportFormat -> [String] -> ProgArgs
 parseArgsExport format args
-  | (length args) == 1 = Export format (head args) defaultOutNameGoal
-  | (length args) == 3 && (args !! 1) == "-o" = Export format (head args) (last args)
+  | (length args) >= 3 && (args !! 1) == "-o" = Export quotient format (head args) (last args)
+  | (length args) >= 1 = Export quotient format (head args) defaultOutNameGoal
   | otherwise = Error
+  where
+    quotient
+      | (last args) == "-qdir" = QuotDirect
+      | (last args) == "-qdel" = QuotDelayed
+      | otherwise = QuotNone
 
 
 getConsRel :: RR.RabitRelationExt -> RabitRelation
@@ -139,10 +144,15 @@ main = do
 
       stop <- getCurrentTime
       putStrLn $ "Time: " ++ show (diffUTCTime stop start)
-    Export format autname outname -> do
-      aut <- RA.parseFile autname
-      let baInt = RA.rabitBAtoIntBA aut
-          expf = if format == Goal then printBAGoalF (show) (id) else printBA
+    Export quotient format autname outname -> do
+      (aut, del1, dir1) <- parseItems autname
+
+      let baInt
+            | quotient == QuotDirect = renameBA 0 $ quotientSimBA aut dir1
+            | quotient == QuotDelayed = renameBA 0 $ quotientSimBA aut del1
+            | otherwise = renameBA 0 aut
+
+      let expf = if format == Goal then printBAGoalF (show) (id) else printBA
       writeFile outname $ expf baInt
     Error -> do
       putStrLn "Bad input parameters."

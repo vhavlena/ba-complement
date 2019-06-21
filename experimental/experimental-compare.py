@@ -22,6 +22,7 @@ STATESLINE = -3
 DELAYSIM = -4
 TIMEOUT = 300 #in seconds
 INPUTG = "in.gff"
+QUOTIENT = "-qdel"
 
 def main():
     #Input parsing
@@ -61,7 +62,7 @@ def main():
     for autfile in files:
         filename = os.path.join(autfolder, autfile)
 
-        subprocess.run([complbin, "--goal", filename, "-o", INPUTG])
+        subprocess.run([complbin, "--goal", filename, "-o", INPUTG, QUOTIENT])
         res[0] = get_output([gbin, "complement", "-m", "safra", "-t", str(TIMEOUT+1), INPUTG])
         res[1] = get_output([gbin, "complement", "-m", "ramsey", "-r", "-t", str(TIMEOUT+1), INPUTG])
         res[2] = get_output([gbin, "complement", "-m", "slice", "-r", "-t", str(TIMEOUT+1), INPUTG])
