@@ -73,7 +73,7 @@ algSimVar _ = None
 
 parseArgsAlg :: Algorithm -> [String] -> ProgArgs
 parseArgsAlg alg args
-  | (length args) >= 3 && (args !! 1) == "-o" = Compl quotient alg (head args) (last args)
+  | (length args) >= 3 && (args !! 1) == "-o" = Compl quotient alg (head args) (args !! 2)
   | (length args) >= 1 = Compl quotient alg (head args) defaultOutName
   | otherwise = Error
   where
@@ -85,7 +85,7 @@ parseArgsAlg alg args
 
 parseArgsExport :: ExportFormat -> [String] -> ProgArgs
 parseArgsExport format args
-  | (length args) >= 3 && (args !! 1) == "-o" = Export quotient format (head args) (last args)
+  | (length args) >= 3 && (args !! 1) == "-o" = Export quotient format (head args) (args !! 2)
   | (length args) >= 1 = Export quotient format (head args) defaultOutNameGoal
   | otherwise = Error
   where
