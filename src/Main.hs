@@ -42,6 +42,7 @@ data Quotient =
 
 data ExportFormat =
   Goal
+  | Ba
   | Graphviz
   deriving (Eq)
 
@@ -61,6 +62,7 @@ parseArgs args
   | (length args) > 1 && (args !! 0) == "--schewesimsat" = parseArgsAlg ScheweSimSat $ tail args
   | (length args) > 1 && (args !! 0) == "--schewesimrem" = parseArgsAlg ScheweSimRem $ tail args
   | (length args) > 1 && (args !! 0) == "--goal" = parseArgsExport Goal $ tail args
+  | (length args) > 1 && (args !! 0) == "--ba" = parseArgsExport Ba $ tail args
   | otherwise = Error
 
 
@@ -130,10 +132,10 @@ main = do
           aut = RA.rabitBAtoIntBA aut2
       let compl = if alg == Schewe then trimBA $ complSchewe (aut) $ Set.toList (alph aut)
                   else trimBA $ complSimSchewe (aut) rel remOpt (Set.toList $ alph aut) var
-          renOrig = autExp
+          renOrig = aut
           renCompl = renameBA 0 compl
       --putStrLn $ "Delayed simulation: " ++ (show $ 0)
-      writeFile outname $ printBARabit $ compl
+      writeFile outname $ printBARabit $ renCompl
       putStrLn $ "States: " ++ (show $ Set.size $ states renCompl)
 
       if cfCheckCorrectness then do
