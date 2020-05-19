@@ -17,6 +17,30 @@ data SimRemMap b = SimRemMap {
 } deriving (Show)
 
 
+nullRemoveState :: (Ord b) =>
+  SimRemMap b
+  -> b
+  ->  SimRemMap b
+nullRemoveState (SimRemMap rm sm) v = SimRemMap (Mp.insert v Set.empty rm) sm
+
+
+updateRemoveState :: (Ord b) =>
+  SimRemMap b
+  -> b
+  -> Set.Set b
+  -> SimRemMap b
+updateRemoveState (SimRemMap rm sm) v val = SimRemMap (Mp.insert v val rm) sm
+
+
+updateValState :: (Ord b) =>
+  SimRemMap b
+  -> b
+  -> Set.Set b
+  -> Set.Set b
+  -> SimRemMap b
+updateValState (SimRemMap rm sm) u rmval smval = SimRemMap (Mp.insert u rmval rm) (Mp.insert u smval sm)
+
+
 removeUpd :: (Ord b) =>
   DetStateMap b
   -> DetStateMap b
@@ -98,11 +122,6 @@ computeSimulationWrap alph premap postmap removemap sim =
       $ SimRemMap (removemap Mp.! sym) sim
 
 
-nullRemoveState (SimRemMap rm sm) v = SimRemMap (Mp.insert v Set.empty rm) sm
-updateRemoveState (SimRemMap rm sm) v val = SimRemMap (Mp.insert v val rm) sm
-updateValState (SimRemMap rm sm) u rmval smval = SimRemMap (Mp.insert u rmval rm) (Mp.insert u smval sm)
-
-
 getState :: (Ord b) =>
   SimRemMap b
   -> Maybe b
@@ -152,7 +171,6 @@ initSimulation ba@(BuchiAutomaton st _ _ tr) premap postmap alph = (remmap, sim)
   remmap = initRem ba alph premap sim
 
 
-
 computeSimulation :: (Ord a, Ord b, Show b, Show a) =>
   BuchiAutomaton b a
   -> Set.Set a
@@ -171,9 +189,3 @@ preSet mapping set = do
 testAut1 filename = do
   aut <- RA.parseFile filename
   putStrLn $ show $ computeSimulation aut $ alph aut
-
--- foldSimStates :: Set.Set SimState
---   -> (DetStateMap, DetStateMap)
--- foldSimStates st = (Mp.fromList $ Set.toList setrem, Mp.fromList $ Set.toList setsim) where
---   fld (SimState remove sim) (setrem, setsim) = (Set.insert remove setrem, Set.insert sim setsim)
---   (setrem, setsim) = Set.foldr fld (Set.empty, Set.empty) st
