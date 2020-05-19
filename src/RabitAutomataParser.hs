@@ -18,7 +18,7 @@ import Text.Parsec.Language
 import Text.Parsec.Prim
 import Text.Parsec.String
 import Text.Parsec.Token
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 
 import BuchiAutomaton

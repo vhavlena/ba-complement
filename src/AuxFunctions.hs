@@ -10,7 +10,7 @@ module AuxFunctions where
 
 import Data.List
 import Data.Char
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 
 
@@ -26,18 +26,18 @@ printListCom :: (Show a) => [a] -> String
 printListCom = printList ","
 
 
-printSet :: (Show a) => String -> Set.Set a -> String
+printSet :: (Ord a) => (Show a) => String -> Set.Set a -> String
 printSet delim st = printList delim (Set.toList st)
 
 
-printSetF :: (a -> String) -> String -> Set.Set a -> String
+printSetF :: (Ord a) => (a -> String) -> String -> Set.Set a -> String
 printSetF f delim st = printListF f delim (Set.toList st)
 
 
-printSetCom :: (Show a) => Set.Set a -> String
+printSetCom :: (Show a, Ord a) => Set.Set a -> String
 printSetCom = printSet ","
 
-printSetComF :: (Show a) => (a -> String) -> Set.Set a -> String
+printSetComF :: (Show a, Ord a) => (a -> String) -> Set.Set a -> String
 printSetComF f = printSetF f ","
 
 
@@ -53,7 +53,13 @@ mapSetFromList :: (Ord k, Ord v) => [(k,v)] -> Map.Map k (Set.Set v)
 mapSetFromList = Map.fromListWith (Set.union) . map (\(x,y) -> (x, Set.singleton y))
 
 
+cartProd s1 s2 = do
+  x1 <- s1
+  x2 <- s2
+  return (x1, x2)
+
+
 indexedSet :: (Ord a) => Set.Set a -> (Set.Set (Int, a))
-indexedSet st = Set.cartesianProduct ind st where
+indexedSet st = cartProd ind st where
   s = (Set.size st) - 1
   ind = Set.fromList [0..s]

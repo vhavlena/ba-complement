@@ -15,11 +15,12 @@ module BuchiAutomaton (
   , succSet
   , alph
   , transToArrowList
+  , transList
 ) where
 
 import qualified Data.List as List
 import qualified Data.Map as Map
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified AuxFunctions as Aux
 
 
@@ -52,5 +53,11 @@ succSet states sym tr = foldr (Set.union) Set.empty
   [Map.findWithDefault Set.empty (q,sym) tr | q <- Set.toList states]
 
 
-transToArrowList :: Transition a b -> [TransitionArrow a b]
+transToArrowList :: (Ord a) => Transition a b -> [TransitionArrow a b]
 transToArrowList ((fr, sym), to) = map (\t -> (fr, sym, t)) $ Set.toList to
+
+
+transList :: (Ord a) => Transitions a b -> [TransitionArrow a b]
+transList trans = do
+  x <- Map.toList $ trans
+  transToArrowList x
