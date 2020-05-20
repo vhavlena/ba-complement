@@ -48,14 +48,17 @@ removeUpd :: (Ord b) =>
   -> b
   -> b
   -> SimRemMap b
-removeUpd pre post st@(SimRemMap rm sm) u w = updateValState st u smu rmu where
-  smu = Set.difference (sm Mp.! u) (Set.singleton w)
-  rmu = Set.union (rm Mp.! u) $ Set.foldr (Set.union) Set.empty flat
-  flat = do
-    w' <- pre Mp.! w
-    if disjoint (post Mp.! w') smu then
-      return $ Set.singleton w'
-      else return $ Set.empty
+removeUpd pre post st@(SimRemMap rm sm) u w =
+  if Set.member w (sm Mp.! u) then updateValState st u smu rmu
+    else st
+    where
+      smu = Set.difference (sm Mp.! u) (Set.singleton w)
+      rmu = Set.union (rm Mp.! u) $ flat
+      flat = do
+        w' <- pre Mp.! w
+        if disjoint (post Mp.! w') smu then
+          Set.singleton w'
+          else Set.empty
 
 
 removeIter :: (Ord b) =>
@@ -129,14 +132,28 @@ getState simstate = if null flt then Nothing else Just $ flt !! 0 where
   flt = Mp.keys $ Mp.filter (not . Set.null) $ removeMap simstate
 
 
-initSimu :: (Ord a, Ord b) =>
+initSimuWrap :: (Ord a, Ord b) =>
   BuchiAutomaton b a
-  -> LabelStateMap a b
   -> DetStateMap b
-initSimu ba@(BuchiAutomaton st _ fin _) _ = mapFromSet $ do
+  -> DetStateMap b
+initSimuWrap ba@(BuchiAutomaton st _ fin _) post = mapFromSet $ do
   state <- st
   return (state, labelledStates ba state) where
-    labelledStates (BuchiAutomaton sts _ f _) s = if Set.member s f then f else Set.difference sts f
+    labelledStates (BuchiAutomaton sts _ f _) s =
+      if val then Set.filter (\x -> not $ null $ Mp.findWithDefault Set.empty x post) sset else sset where
+        val = not $ null $ Mp.findWithDefault Set.empty s post
+        sset = if Set.member s f then f else Set.difference sts f
+
+
+initSimu :: (Ord a, Ord b) =>
+  BuchiAutomaton b a
+  -> Set.Set a
+  -> LabelStateMap a b
+  -> DetStateMap b
+initSimu ba@(BuchiAutomaton st _ fin _) alph postmap = Set.foldr (Mp.unionWith (Set.intersection)) Mp.empty $
+  do
+    a <- alph
+    return $ initSimuWrap ba (postmap Mp.! a)
 
 
 initRem :: (Ord a, Ord b) =>
@@ -160,14 +177,15 @@ initRemIter ba@(BuchiAutomaton st _ _ _) pre sim = mapFromSet $ do
   return (state, Set.difference (preSet pre st) (preSet pre (sim Mp.! state))) where
 
 
-initSimulation :: (Ord a, Ord b) =>
+initSimulation :: (Ord a, Ord b, Show a, Show b) =>
   BuchiAutomaton b a
   -> LabelStateMap a b
   -> LabelStateMap a b
   -> Set.Set a
   -> (LabelStateMap a b, DetStateMap b)
+-- initSimulation ba@(BuchiAutomaton st _ _ tr) premap postmap alph | Dbg.trace ("init: " ++ show (initSimu ba alph postmap)) False = undefined
 initSimulation ba@(BuchiAutomaton st _ _ tr) premap postmap alph = (remmap, sim) where
-  sim = initSimu ba postmap
+  sim = initSimu ba alph postmap
   remmap = initRem ba alph premap sim
 
 
