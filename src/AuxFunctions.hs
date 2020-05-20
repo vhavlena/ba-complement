@@ -58,6 +58,9 @@ cartProd s1 s2 = do
   x2 <- s2
   return (x1, x2)
 
+disjoint x y = Set.null $ Set.intersection x y
+
+--fromPreludeSet = 
 
 indexedSet :: (Ord a) => Set.Set a -> (Set.Set (Int, a))
 indexedSet st = cartProd ind st where

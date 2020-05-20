@@ -16,7 +16,7 @@ module ComplSchewe (
 import BuchiAutomaton
 import BuchiAutomataOper
 import qualified AuxFunctions as Aux
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 
 type RankFunc a = Map.Map a Int
@@ -27,7 +27,7 @@ data StateSchewe a =
   deriving (Show)
 
 
-instance (Eq a) => Eq (StateSchewe a) where
+instance (Ord a) => Eq (StateSchewe a) where
   (Prefix x) == (Prefix y) = x == y
   (Suffix x) == (Suffix y) = x == y
   _ == _ = False
@@ -53,7 +53,7 @@ instance (Ord a) => Ord (StateSchewe a) where
 
 extendRank :: (Ord a) => Set.Set a -> RankFunc a -> RankFunc a
 extendRank sset f = Map.union f $ Map.fromList [(s,1) | s <- add] where
-  add = Set.toList $ Set.difference sset (Map.keysSet f)
+  add = Set.toList $ Set.difference sset (Set.fromList $ Map.keys f)
 
 
 rankOf :: (Ord a) => RankFunc a -> Int
@@ -73,7 +73,7 @@ isRankSTight st f = (not $ Map.null f) && (odd mRank) && (Set.isSubsetOf odds ra
 
 
 rankImage :: (Ord a) => Int -> RankFunc a -> Set.Set a
-rankImage i = Map.keysSet . Map.filterWithKey (\_ v -> v == i)
+rankImage i = Set.fromList . Map.keys . Map.filterWithKey (\_ v -> v == i)
 
 
 generateSRanksFromConstr :: (Ord a) => Set.Set a -> Set.Set a -> [a] -> [(a, Int)] -> Set.Set (RankFunc a)
@@ -92,7 +92,7 @@ generateRanking fin f act states sym  tr = generateSRanksFromConstr fin (succSet
     [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
-isFinSchewe :: StateSchewe a -> Bool
+isFinSchewe :: (Ord a) => StateSchewe a -> Bool
 isFinSchewe (Prefix b) = Set.null b
 isFinSchewe (Suffix (_,b,_,_)) = Set.null b
 

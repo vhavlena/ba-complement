@@ -8,7 +8,7 @@
 import Data.Time
 import System.Environment
 import System.Directory
-import Data.Set as Set
+import Data.Set.Monad as Set
 
 import Simulation
 import ComplKV

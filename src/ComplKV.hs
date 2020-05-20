@@ -15,7 +15,7 @@ module ComplKV (
 import BuchiAutomaton
 import BuchiAutomataOper
 import qualified AuxFunctions as Aux
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 
 type RankFunc a = Map.Map a Int
@@ -27,7 +27,7 @@ printRabitStateKV (s, o, f) = "({" ++ (Aux.printSetComF (id) s) ++ "},{"
   ++ (Aux.printSetComF (id) o) ++ "},{" ++ (Aux.printMapF (id) f) ++ "})"
 
 
-printStateKV :: (Show a) => StateKV a -> String
+printStateKV :: (Ord a, Show a) => StateKV a -> String
 printStateKV (s, o, f) = "({" ++ (Aux.printSetCom s) ++ "},{"
   ++ (Aux.printSetCom o) ++ "},{" ++ (Aux.printMap f) ++ "})"
 
@@ -55,7 +55,7 @@ generateRanking fin f act sym  tr = generateFromConstr fin rest where
     [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
-isFinKV :: StateKV a -> Bool
+isFinKV :: (Ord a) => StateKV a -> Bool
 isFinKV (_, b, _) = Set.null b
 
 

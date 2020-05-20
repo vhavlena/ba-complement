@@ -13,7 +13,7 @@ module RabitRelation (
 
 import RabitRelationParser
 import RabitAutomataParser
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 
 type RabitRelation = Set.Set (RabitState, RabitState)
 

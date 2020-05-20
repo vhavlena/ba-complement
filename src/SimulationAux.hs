@@ -6,7 +6,6 @@ import qualified Data.Map as Map
 import qualified Data.Set.Monad as Set
 
 
-disjoint x y = Set.null $ Set.intersection x y
 symDifference x y = Set.union (Set.difference x y) (Set.difference y x)
 
 mapFromSet :: (Ord k, Ord v)  => Set.Set (k,v) -> Map.Map k v

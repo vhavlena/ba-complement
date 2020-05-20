@@ -18,7 +18,7 @@ module Simulation (
 ) where
 
 
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 import qualified Data.Tuple as Tp
 import qualified RabitAutomataParser as RP

@@ -24,13 +24,14 @@ module BuchiAutomataOper (
 
 import qualified Data.Map as Map
 import qualified Data.Bimap as Bimp
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.List as List
 import qualified Data.Maybe as Mb
 import Data.Graph
 import Data.Tree
 import BuchiAutomaton
 import Simulation
+import qualified AuxFunctions as Aux
 
 type StateMap a = Bimp.Bimap Int a
 type StateProd a b = (a, b, Bool)
@@ -82,7 +83,7 @@ convBAtoGraph mp (BuchiAutomaton st _ _ tr) = buildG bounds $ rename $ trToEdges
   vert = Bimp.keys mp
   bounds = (minimum vert, maximum vert)
   trToEdges = Set.toList . foldr (Set.union) Set.empty .
-    map (\((x,y),s) -> Set.cartesianProduct (Set.singleton x) s) . Map.toList
+    map (\((x,y),s) -> Aux.cartProd (Set.singleton x) s) . Map.toList
   rename = map (\(x,y) -> (mp Bimp.!> x, mp Bimp.!> y))
 
 
@@ -93,7 +94,7 @@ isTrivialSCC gr tree = ((length fl) <= 1) && (not $ elem (it, it) (edges gr)) wh
 
 
 finalSCC :: (Ord a) => BuchiAutomaton a b -> [Set.Set a]
-finalSCC b@(BuchiAutomaton _ _ fin _) = filter (\x -> not $ Set.disjoint x fin) stscc where
+finalSCC b@(BuchiAutomaton _ _ fin _) = filter (\x -> not $ Aux.disjoint x fin) stscc where
   stmap = createStateMap b
   graph = convBAtoGraph stmap b
   sccs = filter (not . isTrivialSCC graph) $ scc graph
@@ -114,7 +115,7 @@ transposeBA :: (Ord a, Ord b) => BuchiAutomaton a b -> BuchiAutomaton a b
 transposeBA (BuchiAutomaton st ini fin tr) = BuchiAutomaton st ini fin tr' where
   trList = map (\((x,a),s) -> (Set.map (\(c,d) -> ((c,a),d)) $ revProd x s)) $ Map.toList tr
   tr' = Map.fromListWith (Set.union) $ Set.toList $ foldr (Set.union) Set.empty trList
-  revProd x s = Set.cartesianProduct s (Set.singleton $ Set.singleton x)
+  revProd x s = Aux.cartProd s (Set.singleton $ Set.singleton x)
 
 
 restrictBA :: (Ord a) => BuchiAutomaton a b -> Set.Set a -> BuchiAutomaton a b
@@ -194,7 +195,7 @@ succProd (BuchiAutomaton _ _ fin1 tr1) (BuchiAutomaton _ _ fin2 tr2) (q1, q2, n)
   | otherwise = retSet i' where
     fsucc = succTrans q1 sym tr1
     ssucc = succTrans q2 sym tr2
-    retSet i = Set.map (\(x,y) -> (x,y,i)) $ Set.cartesianProduct fsucc ssucc
+    retSet i = Set.map (\(x,y) -> (x,y,i)) $ Aux.cartProd fsucc ssucc
     i = if Set.member q1 fin1 then False else True
     i' = if Set.member q2 fin2 then True else False
 
@@ -208,7 +209,7 @@ iniProd :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b
   -> BuchiAutomaton c b
   -> Set.Set (StateProd a c)
 iniProd (BuchiAutomaton _ ini1 _ _) (BuchiAutomaton _ ini2 _ _) =
-    Set.map (\(x,y) -> (x,y,True)) $ Set.cartesianProduct ini1 ini2
+    Set.map (\(x,y) -> (x,y,True)) $ Aux.cartProd ini1 ini2
 
 
 intersectionBA :: (Ord a, Ord b, Ord c) => BuchiAutomaton a b -> BuchiAutomaton c b -> BuchiAutomaton (StateProd a c) b

@@ -15,7 +15,7 @@ import BuchiAutomaton
 import BuchiAutomataOper
 import RabitRelation
 import qualified AuxFunctions as Aux
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 
 type RankFunc a = Map.Map a Int
@@ -44,7 +44,7 @@ generateRanking fin f act sym tr = generateFromConstr fin rest where
     [(q', Map.findWithDefault 0 q f) | q <- Set.toList act, q' <- succTransList q sym tr]
 
 
-isFinSimKV :: StateKV a -> Bool
+isFinSimKV :: (Ord a) => StateKV a -> Bool
 isFinSimKV (_, b, _) = Set.null b
 
 
@@ -56,7 +56,7 @@ iniSimKV (BuchiAutomaton st ini fin _) sim =
 isStateSimValid :: (Ord a) => Simulation a -> StateKV a -> Bool
 isStateSimValid (Delayed rel) (sset, oset, f) = Set.foldr (&&) True $
   Set.map (\(x,y) -> (Map.findWithDefault 0 x f) <= (evenCeil (Map.findWithDefault 0 y f))) $
-  Set.intersection rel (Set.cartesianProduct sset sset)
+  Set.intersection rel (Aux.cartProd sset sset)
 
 
 saturateRank :: (Ord a) => Simulation a -> Set.Set a -> Set.Set a -> RankFunc a -> RankFunc a

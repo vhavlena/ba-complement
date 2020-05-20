@@ -17,7 +17,7 @@ import BuchiAutomaton
 import BuchiAutomataOper
 import ComplSchewe
 import qualified AuxFunctions as Aux
-import qualified Data.Set as Set
+import qualified Data.Set.Monad as Set
 import qualified Data.Map as Map
 import qualified Data.List as Lst
 
@@ -58,17 +58,17 @@ isRankSTight st f = (not $ Map.null f) && (odd mRank) && (Set.isSubsetOf odds ra
 
 
 rankImage :: (Ord a) => Int -> RankFunc a -> Set.Set a
-rankImage i = Map.keysSet . Map.filterWithKey (\_ v -> v == i)
+rankImage i = Set.fromList . Map.keys . Map.filterWithKey (\_ v -> v == i)
 
 
 isStateSimValid :: (Ord a) => Simulation a -> StateSchewe a -> Bool
 isStateSimValid _ (Prefix _) = True
 isStateSimValid (Delayed rel) (Suffix (sset, oset, f, i)) = (isRankSTight sset f) && (Set.foldr (&&) True $
   Set.map (\(x,y) -> (f Map.! x) <= (evenCeil (f Map.! y))) $
-  Set.intersection rel (Set.cartesianProduct sset sset))
+  Set.intersection rel (Aux.cartProd sset sset))
 isStateSimValid (Direct rel) (Suffix (sset, oset, f, i)) = (isRankSTight sset f) && (Set.foldr (&&) True $
   Set.map (\(x,y) -> (f Map.! x) <= (f Map.! y)) $
-  Set.intersection rel (Set.cartesianProduct sset sset))
+  Set.intersection rel (Aux.cartProd sset sset))
 
 
 saturateStates :: (Ord a) => Simulation a -> Set.Set a -> Set.Set a
@@ -92,7 +92,7 @@ generateRanking fin f act next states sym  tr = generateSRanksFromConstr fin nex
     [(q', 2*(length states)) | q' <- Set.toList $ Set.difference next (succSet act sym tr)]
 
 
-isFinSchewe :: StateSchewe a -> Bool
+isFinSchewe :: (Ord a) => StateSchewe a -> Bool
 isFinSchewe (Prefix b) = Set.null b
 isFinSchewe (Suffix (_,b,_,_)) = Set.null b
 
