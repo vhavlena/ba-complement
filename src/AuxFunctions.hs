@@ -59,8 +59,10 @@ cartProd s1 s2 = do
   return (x1, x2)
 
 disjoint x y = Set.null $ Set.intersection x y
+symDifference x y = Set.union (Set.difference x y) (Set.difference y x)
 
---fromPreludeSet = 
+
+--fromPreludeSet =
 
 indexedSet :: (Ord a) => Set.Set a -> (Set.Set (Int, a))
 indexedSet st = cartProd ind st where

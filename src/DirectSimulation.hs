@@ -1,8 +1,12 @@
 
-module DirectSimulation where
+module DirectSimulation (
+  computeSimulatedStates
+  , computeSimulation
+) where
 
 import BuchiAutomaton
 import SimulationAux
+import AuxFunctions
 import qualified RabitAutomataParser as RA
 import qualified Data.Set.Monad as Set
 import qualified Data.Map as Mp
@@ -189,14 +193,23 @@ initSimulation ba@(BuchiAutomaton st _ _ tr) premap postmap alph = (remmap, sim)
   remmap = initRem ba alph premap sim
 
 
-computeSimulation :: (Ord a, Ord b, Show b, Show a) =>
+computeSimulatedStates :: (Ord a, Ord b, Show b, Show a) =>
   BuchiAutomaton b a
   -> Set.Set a
   -> DetStateMap b
-computeSimulation ba alph = computeSimulationWrap alph premap postmap removemap sim where
+computeSimulatedStates ba alph = computeSimulationWrap alph premap postmap removemap sim where
   premap = preMap ba alph
   postmap = postMap ba alph
   (removemap, sim) = initSimulation ba premap postmap alph
+
+
+computeSimulation :: (Ord a, Ord b, Show b, Show a) =>
+  BuchiAutomaton b a
+  -> Set.Set a
+  -> Set.Set (b,b)
+computeSimulation ba alph = Set.fromList $ do
+  (p, st) <- Mp.toList $ computeSimulatedStates ba alph
+  [(p,t) | t <- Set.toList st]
 
 
 preSet mapping set = do
@@ -206,4 +219,4 @@ preSet mapping set = do
 
 testAut1 filename = do
   aut <- RA.parseFile filename
-  putStrLn $ show $ computeSimulation aut $ alph aut
+  putStrLn $ show $ computeSimulatedStates aut $ alph aut

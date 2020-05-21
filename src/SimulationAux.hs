@@ -6,8 +6,6 @@ import qualified Data.Map as Map
 import qualified Data.Set.Monad as Set
 
 
-symDifference x y = Set.union (Set.difference x y) (Set.difference y x)
-
 mapFromSet :: (Ord k, Ord v)  => Set.Set (k,v) -> Map.Map k v
 mapFromSet = Map.fromList . Set.toList
 
